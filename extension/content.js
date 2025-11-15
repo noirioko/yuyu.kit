@@ -95,8 +95,26 @@ function extractAssetData() {
   // Extract price - try multiple strategies
   let priceFound = false;
 
+  // CSP-specific: Check for FREE items FIRST (before any price extraction)
+  if (data.platform === 'Clip Studio Paint') {
+    const bodyText = document.body.innerText || '';
+    const isFree = /\bFREE\b/i.test(bodyText) ||
+                   /無料/i.test(bodyText) ||
+                   /0\s*CLIPPY/i.test(bodyText) ||
+                   /0\s*GOLD/i.test(bodyText) ||
+                   /CLIPPY\s*0\b/i.test(bodyText) ||
+                   /GOLD\s*0\b/i.test(bodyText);
+
+    if (isFree) {
+      console.log('✅ CSP free item detected');
+      data.price = 0;
+      data.currency = 'Free';
+      priceFound = true;
+    }
+  }
+
   // ACON3D-specific: Try to find both original and sale prices
-  if (data.platform === 'ACON3D') {
+  if (!priceFound && data.platform === 'ACON3D') {
     try {
       console.log('🔍 ACON3D detected - looking for sale info...');
 
@@ -289,19 +307,6 @@ function extractAssetData() {
     console.log('⚠️ No price found on this page');
   }
 
-  // CSP-specific: Check for FREE items
-  if (data.platform === 'Clip Studio Paint') {
-    const bodyText = document.body.innerText || '';
-    const isFree = /\bFREE\b/i.test(bodyText) || /無料/i.test(bodyText); // FREE in English or Japanese
-
-    if (isFree) {
-      console.log('✅ CSP free item detected');
-      data.price = 0;
-      data.currency = 'Free';
-      priceFound = true;
-    }
-  }
-
   // SALE DETECTION: Look for discount indicators and extract original price
   if (data.price && data.price > 0) {
     try {
@@ -388,8 +393,21 @@ function extractAssetData() {
   try {
     console.log('👤 Extracting creator/brand...');
 
-    // Strategy 1: ACON3D specific - Look for brand name
-    if (data.platform === 'ACON3D') {
+    // Strategy 1a: CSP specific - Look for author with specific link
+    if (data.platform === 'Clip Studio Paint') {
+      // Look for author link
+      const authorLink = document.querySelector('a[href*="/profile/"]');
+      if (authorLink) {
+        const authorName = authorLink.textContent?.trim();
+        if (authorName && authorName.length >= 2 && authorName.length <= 30) {
+          data.creator = authorName;
+          console.log('✅ Found CSP author from profile link:', data.creator);
+        }
+      }
+    }
+
+    // Strategy 1b: ACON3D specific - Look for brand name
+    if (!data.creator && data.platform === 'ACON3D') {
       // Look for "Brand:" label
       const bodyText = document.body.innerText || '';
       const brandPatterns = [
@@ -402,7 +420,15 @@ function extractAssetData() {
         const match = bodyText.match(pattern);
         if (match && match[1]) {
           const brandName = match[1].trim();
-          if (brandName.length >= 2 && brandName.length <= 50 && !brandName.includes('\n')) {
+
+          // Filter out descriptions
+          const looksLikeDescription =
+            brandName.length > 30 ||
+            (brandName.match(/\./g) || []).length > 1 ||
+            brandName.includes('\n') ||
+            /[,;:].*[,;:]/.test(brandName);
+
+          if (!looksLikeDescription && brandName.length >= 2 && brandName.length <= 30) {
             data.creator = brandName;
             console.log('✅ Found brand from text pattern:', data.creator);
             break;
@@ -425,7 +451,15 @@ function extractAssetData() {
 
             if (brandName && brandName.length >= 2 && brandName.length <= 100) {
               brandName = brandName.replace(/\s+/g, ' ').trim();
-              if (brandName.length >= 2 && brandName.length <= 50) {
+
+              // Filter out descriptions
+              const looksLikeDescription =
+                brandName.length > 30 ||
+                (brandName.match(/\./g) || []).length > 1 ||
+                brandName.includes('\n') ||
+                /[,;:].*[,;:]/.test(brandName);
+
+              if (!looksLikeDescription && brandName.length >= 2 && brandName.length <= 30) {
                 data.creator = brandName;
                 console.log(`✅ Found brand from ${selector}:`, data.creator);
                 break;
@@ -440,9 +474,18 @@ function extractAssetData() {
     if (!data.creator) {
       const metaAuthor = document.querySelector('meta[name="author"], meta[property="author"], meta[property="article:author"]');
       if (metaAuthor) {
-        const authorName = metaAuthor.getAttribute('content');
-        if (authorName && authorName.length > 0 && authorName.length < 100) {
-          data.creator = authorName.trim();
+        const authorName = metaAuthor.getAttribute('content')?.trim();
+
+        // Filter out descriptions
+        const looksLikeDescription =
+          !authorName ||
+          authorName.length > 30 ||
+          (authorName.match(/\./g) || []).length > 1 ||
+          authorName.includes('\n') ||
+          /[,;:].*[,;:]/.test(authorName);
+
+        if (!looksLikeDescription && authorName.length >= 2 && authorName.length <= 30) {
+          data.creator = authorName;
           console.log('✅ Found creator from meta tag:', data.creator);
         }
       }
@@ -464,7 +507,15 @@ function extractAssetData() {
         const match = bodyText.match(pattern);
         if (match && match[1]) {
           const authorName = match[1].trim();
-          if (authorName.length >= 2 && authorName.length <= 50 && !authorName.includes('\n')) {
+
+          // Filter out descriptions
+          const looksLikeDescription =
+            authorName.length > 30 ||
+            (authorName.match(/\./g) || []).length > 1 ||
+            authorName.includes('\n') ||
+            /[,;:].*[,;:]/.test(authorName);
+
+          if (!looksLikeDescription && authorName.length >= 2 && authorName.length <= 30) {
             data.creator = authorName;
             console.log('✅ Found creator from text pattern:', data.creator);
             break;
@@ -497,10 +548,20 @@ function extractAssetData() {
 
           if (authorName && authorName.length >= 2 && authorName.length <= 100) {
             authorName = authorName.replace(/\s+/g, ' ').trim();
-            if (authorName.length >= 2 && authorName.length <= 50) {
+
+            // Filter out descriptions (they're usually longer and contain punctuation)
+            const looksLikeDescription =
+              authorName.length > 30 || // Too long for a name
+              (authorName.match(/\./g) || []).length > 1 || // Multiple sentences
+              authorName.includes('\n') || // Multiple lines
+              /[,;:].*[,;:]/.test(authorName); // Multiple punctuation marks
+
+            if (!looksLikeDescription && authorName.length >= 2 && authorName.length <= 30) {
               data.creator = authorName;
               console.log(`✅ Found creator from ${selector}:`, data.creator);
               break;
+            } else if (looksLikeDescription) {
+              console.log('⚠️ Skipping description-like text:', authorName.substring(0, 50) + '...');
             }
           }
         }
