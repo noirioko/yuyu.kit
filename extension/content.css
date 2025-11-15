@@ -1,4 +1,4 @@
-.yuyuasset-floating-btn {
+.mypebbles-floating-btn {
   position: fixed;
   bottom: 24px;
   right: 24px;
@@ -9,7 +9,7 @@
   gap: 8px;
 
   padding: 12px 20px;
-  background: linear-gradient(135deg, #9333ea 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #ec4899 100%);
   color: white;
   border: none;
   border-radius: 100px;
@@ -19,29 +19,29 @@
   font-weight: 600;
 
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 
   transition: all 0.2s ease;
 }
 
-.yuyuasset-floating-btn:hover {
+.mypebbles-floating-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(147, 51, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
-.yuyuasset-floating-btn:active {
+.mypebbles-floating-btn:active {
   transform: translateY(0);
 }
 
-.yuyuasset-floating-btn:disabled {
+.mypebbles-floating-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
 }
 
-.yuyuasset-floating-btn.success {
+.mypebbles-floating-btn.success {
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
 }
 
-.yuyuasset-floating-btn svg {
+.mypebbles-floating-btn svg {
   flex-shrink: 0;
 }

@@ -1,4 +1,4 @@
-console.log('🎨 YuyuAsset extension loaded!');
+console.log('🎨 MyPebbles extension loaded!');
 
 // Extract asset data from the current page
 function extractAssetData() {
@@ -20,6 +20,8 @@ function extractAssetData() {
   const hostname = window.location.hostname;
   if (hostname.includes('acon3d')) {
     data.platform = 'ACON3D';
+  } else if (hostname.includes('clip-studio')) {
+    data.platform = 'Clip Studio Paint';
   } else if (hostname.includes('gumroad')) {
     data.platform = 'Gumroad';
   } else if (hostname.includes('vgen')) {
@@ -160,6 +162,8 @@ function extractAssetData() {
           else if (curr === 'GBP') data.currency = '£';
           else if (curr === 'KRW') data.currency = '₩';
           else if (curr === 'JPY') data.currency = '¥';
+          else if (curr === 'GOLD' || curr === 'Gold') data.currency = 'Gold';
+          else if (curr === 'CLIPPY' || curr === 'Clippy') data.currency = 'Clippy';
         }
         console.log('✅ Found price from meta tags:', data.price, data.currency);
         priceFound = true;
@@ -182,6 +186,8 @@ function extractAssetData() {
             else if (curr === 'GBP') data.currency = '£';
             else if (curr === 'KRW') data.currency = '₩';
             else if (curr === 'JPY') data.currency = '¥';
+            else if (curr === 'GOLD' || curr === 'Gold') data.currency = 'Gold';
+            else if (curr === 'CLIPPY' || curr === 'Clippy') data.currency = 'Clippy';
           }
           console.log('✅ Found price from JSON-LD:', data.price, data.currency);
           priceFound = true;
@@ -208,7 +214,11 @@ function extractAssetData() {
       /€\s*([\d,]+\.?\d*)/,            // €49.99
       /EUR\s*([\d,]+\.?\d*)/,          // EUR 49.99
       /£\s*([\d,]+\.?\d*)/,            // £49.99
-      /GBP\s*([\d,]+\.?\d*)/           // GBP 49.99
+      /GBP\s*([\d,]+\.?\d*)/,          // GBP 49.99
+      /([\d,]+\.?\d*)\s*GOLD/i,        // 100 GOLD
+      /GOLD\s*([\d,]+\.?\d*)/i,        // GOLD 100
+      /([\d,]+\.?\d*)\s*CLIPPY/i,      // 50 CLIPPY
+      /CLIPPY\s*([\d,]+\.?\d*)/i       // CLIPPY 50
     ];
 
     for (const pattern of pricePatterns) {
@@ -226,6 +236,8 @@ function extractAssetData() {
           else if (patternStr.includes('₩') || patternStr.includes('KRW')) data.currency = '₩';
           else if (patternStr.includes('€') || patternStr.includes('EUR')) data.currency = '€';
           else if (patternStr.includes('£') || patternStr.includes('GBP')) data.currency = '£';
+          else if (patternStr.toUpperCase().includes('GOLD')) data.currency = 'Gold';
+          else if (patternStr.toUpperCase().includes('CLIPPY')) data.currency = 'Clippy';
 
           console.log('✅ Found price from page text:', data.price, data.currency);
           priceFound = true;
@@ -524,14 +536,74 @@ function extractAssetData() {
   return data;
 }
 
+// Check if current page is a product/asset page (not homepage, category, search, etc.)
+function isAssetPage() {
+  const url = window.location.href;
+  const pathname = window.location.pathname;
+  const hostname = window.location.hostname;
+
+  console.log('🔍 Checking if asset page:', url);
+
+  // ACON3D: Must be /product/ with language code (en, ko, ja)
+  if (hostname.includes('acon3d')) {
+    const isProductPage = /\/(en|ko|ja)\/product\/\d+/.test(url);
+    console.log('✅ ACON3D product page:', isProductPage);
+    return isProductPage;
+  }
+
+  // Clip Studio Paint: Must be /detail?id=
+  if (hostname.includes('clip-studio')) {
+    const isDetailPage = url.includes('/detail?id=');
+    console.log('✅ CSP detail page:', isDetailPage);
+    return isDetailPage;
+  }
+
+  // Gumroad: Product pages are at /{username}/{product-slug}
+  if (hostname.includes('gumroad')) {
+    const isProductPage = pathname.split('/').filter(p => p).length >= 2;
+    console.log('✅ Gumroad product page:', isProductPage);
+    return isProductPage;
+  }
+
+  // VGEN: Commission pages are /username/product/id
+  if (hostname.includes('vgen')) {
+    const isProductPage = pathname.includes('/product/');
+    console.log('✅ VGEN product page:', isProductPage);
+    return isProductPage;
+  }
+
+  // ArtStation Marketplace: /marketplace/p/{product-slug}
+  if (hostname.includes('artstation')) {
+    const isProductPage = pathname.includes('/marketplace/p/');
+    console.log('✅ ArtStation product page:', isProductPage);
+    return isProductPage;
+  }
+
+  // Blender Market: /products/{product-slug}
+  if (hostname.includes('blendermarket')) {
+    const isProductPage = pathname.includes('/products/');
+    console.log('✅ Blender Market product page:', isProductPage);
+    return isProductPage;
+  }
+
+  // Unknown platform - show button
+  console.log('⚠️ Unknown platform, showing button anyway');
+  return true;
+}
+
 // Create and inject the floating button
 function createFloatingButton() {
+  // Check if we're on a valid asset page
+  if (!isAssetPage()) {
+    console.log('⏭️ Not an asset page, skipping button injection');
+    return;
+  }
   // Check if button already exists
-  if (document.getElementById('yuyuasset-btn')) return;
+  if (document.getElementById('mypebbles-btn')) return;
 
   const button = document.createElement('button');
-  button.id = 'yuyuasset-btn';
-  button.className = 'yuyuasset-floating-btn';
+  button.id = 'mypebbles-btn';
+  button.className = 'mypebbles-floating-btn';
 
   button.innerHTML = `
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
