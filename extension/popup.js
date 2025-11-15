@@ -111,7 +111,7 @@ async function renderMain() {
             🔄
           </button>
         </div>
-        <select id="projectSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: none; font-size: 12px; color: #667eea;">
+        <select id="projectSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: none; font-size: 12px; color: #6366f1;">
           <option value="">No Project</option>
           ${projectsList.map(p => `<option value="${p.id}" ${selectedProject === p.id ? 'selected' : ''}>${p.icon || '📁'} ${p.name}</option>`).join('')}
         </select>
@@ -333,6 +333,27 @@ async function saveAsset(assetData) {
     if (duplicateResult.success && duplicateResult.isDuplicate) {
       const { existingAsset } = duplicateResult;
       const statusEmoji = existingAsset.status === 'wishlist' ? '📌' : existingAsset.status === 'bought' ? '✅' : '🎨';
+
+      // Add notification to localStorage
+      try {
+        const notificationsKey = `notifications_${apiKey}`;
+        const existingNotifs = localStorage.getItem(notificationsKey);
+        const notifications = existingNotifs ? JSON.parse(existingNotifs) : [];
+
+        notifications.push({
+          id: `notif_${Date.now()}`,
+          type: 'duplicate',
+          assetId: existingAsset.id,
+          assetTitle: existingAsset.title,
+          url: assetData.url,
+          timestamp: new Date().toISOString()
+        });
+
+        localStorage.setItem(notificationsKey, JSON.stringify(notifications));
+        console.log('📬 Notification added to localStorage');
+      } catch (e) {
+        console.error('Failed to add notification:', e);
+      }
 
       if (!confirm(`⚠️ You already have this asset!\n\n"${existingAsset.title}"\n${statusEmoji} Status: ${existingAsset.status}\n🏪 Platform: ${existingAsset.platform}\n\nDo you want to add it again anyway?`)) {
         console.log('❌ User cancelled - duplicate detected');

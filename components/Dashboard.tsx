@@ -28,6 +28,34 @@ export default function Dashboard() {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
   const [checkingPrices, setCheckingPrices] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{id: string, type: 'duplicate', assetId: string, assetTitle: string, url: string, timestamp: Date}>>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Load notifications from localStorage
+  useEffect(() => {
+    if (!user) return;
+
+    const storedNotifs = localStorage.getItem(`notifications_${user.uid}`);
+    if (storedNotifs) {
+      try {
+        const parsed = JSON.parse(storedNotifs);
+        setNotifications(parsed.map((n: any) => ({
+          ...n,
+          timestamp: new Date(n.timestamp)
+        })));
+      } catch (e) {
+        console.error('Failed to parse notifications:', e);
+      }
+    }
+  }, [user]);
+
+  // Save notifications to localStorage whenever they change
+  useEffect(() => {
+    if (!user) return;
+
+    localStorage.setItem(`notifications_${user.uid}`, JSON.stringify(notifications));
+  }, [notifications, user]);
 
   // Load user data
   useEffect(() => {
@@ -126,57 +154,6 @@ export default function Dashboard() {
     }
   };
 
-  const fixAllCounts = async () => {
-    if (!db || !user) return;
-
-    const confirmed = confirm('This will recalculate all project and collection counts. Continue?');
-    if (!confirmed) return;
-
-    try {
-      console.log('🔧 Fixing all counts...');
-
-      // Count assets per project
-      const projectCounts: Record<string, number> = {};
-      const collectionCounts: Record<string, number> = {};
-
-      assets.forEach(asset => {
-        if (asset.projectId) {
-          projectCounts[asset.projectId] = (projectCounts[asset.projectId] || 0) + 1;
-        }
-        if (asset.collectionId) {
-          collectionCounts[asset.collectionId] = (collectionCounts[asset.collectionId] || 0) + 1;
-        }
-      });
-
-      // Update all projects
-      for (const project of projects) {
-        const correctCount = projectCounts[project.id] || 0;
-        if (project.assetCount !== correctCount) {
-          console.log(`Fixing ${project.name}: ${project.assetCount} → ${correctCount}`);
-          await updateDoc(doc(db, 'projects', project.id), {
-            assetCount: correctCount
-          });
-        }
-      }
-
-      // Update all collections
-      for (const collection of collections) {
-        const correctCount = collectionCounts[collection.id] || 0;
-        if (collection.assetCount !== correctCount) {
-          console.log(`Fixing ${collection.name}: ${collection.assetCount} → ${correctCount}`);
-          await updateDoc(doc(db, 'collections', collection.id), {
-            assetCount: correctCount
-          });
-        }
-      }
-
-      console.log('✅ All counts fixed!');
-      alert('Counts have been fixed!');
-    } catch (error) {
-      console.error('Error fixing counts:', error);
-      alert('Failed to fix counts. Check console for details.');
-    }
-  };
 
   const handleCheckPrices = async () => {
     if (!user || !db) return;
@@ -269,6 +246,52 @@ export default function Dashboard() {
     }
   };
 
+  const handleDeleteAllData = async () => {
+    if (!user || !db) return;
+
+    const confirmation = prompt(
+      `⚠️ WARNING: This will permanently delete ALL your data!\n\n` +
+      `This includes:\n` +
+      `• ${assets.length} assets\n` +
+      `• ${projects.length} projects\n` +
+      `• ${collections.length} collections\n\n` +
+      `Type "DELETE ALL" to confirm:`
+    );
+
+    if (confirmation !== 'DELETE ALL') {
+      alert('Deletion cancelled. Your data is safe.');
+      return;
+    }
+
+    try {
+      console.log('🗑️ Deleting all user data...');
+
+      // Delete all assets
+      for (const asset of assets) {
+        await deleteDoc(doc(db, 'assets', asset.id));
+      }
+      console.log(`✅ Deleted ${assets.length} assets`);
+
+      // Delete all projects
+      for (const project of projects) {
+        await deleteDoc(doc(db, 'projects', project.id));
+      }
+      console.log(`✅ Deleted ${projects.length} projects`);
+
+      // Delete all collections
+      for (const collection of collections) {
+        await deleteDoc(doc(db, 'collections', collection.id));
+      }
+      console.log(`✅ Deleted ${collections.length} collections`);
+
+      alert('All data has been permanently deleted.');
+      console.log('✅ All user data deleted successfully');
+    } catch (error) {
+      console.error('❌ Error deleting data:', error);
+      alert('Failed to delete all data. Some items may remain. Check console for details.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -286,15 +309,8 @@ export default function Dashboard() {
 
             <div className="flex items-center gap-4">
               <button
-                onClick={fixAllCounts}
-                className="text-xs text-gray-500 hover:text-purple-600 transition"
-                title="Fix project/collection counts"
-              >
-                🔧 Fix Counts
-              </button>
-              <button
                 onClick={handleAutoTagAll}
-                className="text-xs text-gray-500 hover:text-purple-600 transition"
+                className="text-xs text-gray-500 hover:text-indigo-600 transition"
                 title="Auto-tag all assets with platform and creator"
               >
                 🏷️ Auto-Tag All
@@ -306,22 +322,167 @@ export default function Dashboard() {
                     alert('User ID copied! Paste it in the browser extension.');
                   }
                 }}
-                className="text-xs text-gray-500 hover:text-purple-600 transition"
+                className="text-xs text-gray-500 hover:text-indigo-600 transition"
                 title="Copy User ID for extension"
               >
                 📋 Copy User ID
               </button>
-              <img
-                src={user?.photoURL || ''}
-                alt={user?.displayName || ''}
-                className="w-10 h-10 rounded-full"
-              />
-              <button
-                onClick={signOut}
-                className="text-sm text-gray-600 hover:text-gray-900"
-              >
-                Sign out
-              </button>
+
+              {/* Notifications */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative text-gray-600 hover:text-indigo-600 transition"
+                  title="Notifications"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-96 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50 max-h-96 overflow-y-auto">
+                    <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-800">Notifications</h3>
+                      {notifications.length > 0 && (
+                        <button
+                          onClick={() => setNotifications([])}
+                          className="text-xs text-indigo-600 hover:text-indigo-700"
+                        >
+                          Clear All
+                        </button>
+                      )}
+                    </div>
+
+                    {notifications.length === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-500 text-sm">
+                        No notifications
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-100">
+                        {notifications.map((notif) => (
+                          <div key={notif.id} className="px-4 py-3 hover:bg-gray-50">
+                            <div className="flex items-start gap-3">
+                              <span className="text-2xl">⚠️</span>
+                              <div className="flex-1">
+                                <p className="text-sm text-gray-800 font-medium mb-1">
+                                  Duplicate asset detected
+                                </p>
+                                <p className="text-sm text-gray-600 mb-2">
+                                  You seem to have already bookmarked this asset
+                                </p>
+                                <p className="text-sm font-semibold text-indigo-600 mb-2">
+                                  {notif.assetTitle}
+                                </p>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      const asset = assets.find(a => a.id === notif.assetId);
+                                      if (asset) setViewingAsset(asset);
+                                      setShowNotifications(false);
+                                    }}
+                                    className="text-xs px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition"
+                                  >
+                                    View Asset
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setNotifications(notifications.filter(n => n.id !== notif.id));
+                                    }}
+                                    className="text-xs px-3 py-1 bg-gray-100 text-gray-700 rounded-full hover:bg-gray-200 transition"
+                                  >
+                                    Dismiss
+                                  </button>
+                                </div>
+                                <p className="text-xs text-gray-400 mt-2">
+                                  {notif.timestamp.toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Profile Dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  className="flex items-center gap-2 hover:opacity-80 transition"
+                >
+                  <img
+                    src={user?.photoURL || ''}
+                    alt={user?.displayName || ''}
+                    className="w-10 h-10 rounded-full"
+                  />
+                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+
+                {showProfileMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
+                    <div className="px-4 py-2 border-b border-gray-100">
+                      <p className="text-sm font-semibold text-gray-800">{user?.displayName}</p>
+                      <p className="text-xs text-gray-500">{user?.email}</p>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        router.push('/about');
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 transition flex items-center gap-2"
+                    >
+                      <span>ℹ️</span>
+                      <span>About</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push('/tags');
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 transition flex items-center gap-2"
+                    >
+                      <span>🏷️</span>
+                      <span>Browse Tags</span>
+                    </button>
+
+                    <div className="border-t border-gray-100 my-2"></div>
+
+                    <button
+                      onClick={() => {
+                        handleDeleteAllData();
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition flex items-center gap-2"
+                    >
+                      <span>🗑️</span>
+                      <span>Delete All Data</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        signOut();
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition flex items-center gap-2"
+                    >
+                      <span>👋</span>
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -341,7 +502,7 @@ export default function Dashboard() {
                     onClick={() => { setView('all'); setSelectedProject(null); setSelectedCollection(null); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                       view === 'all' && !selectedProject && !selectedCollection
-                        ? 'bg-purple-50 text-purple-700 font-medium'
+                        ? 'bg-indigo-50 text-indigo-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -351,7 +512,7 @@ export default function Dashboard() {
                     onClick={() => { setView('wishlist'); setSelectedProject(null); setSelectedCollection(null); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                       view === 'wishlist' && !selectedProject && !selectedCollection
-                        ? 'bg-purple-50 text-purple-700 font-medium'
+                        ? 'bg-indigo-50 text-indigo-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -361,7 +522,7 @@ export default function Dashboard() {
                     onClick={() => { setView('bought'); setSelectedProject(null); setSelectedCollection(null); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                       view === 'bought' && !selectedProject && !selectedCollection
-                        ? 'bg-purple-50 text-purple-700 font-medium'
+                        ? 'bg-indigo-50 text-indigo-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -376,7 +537,7 @@ export default function Dashboard() {
                   <h3 className="text-sm font-semibold text-gray-700">PROJECTS</h3>
                   <button
                     onClick={() => setShowAddProject(true)}
-                    className="text-purple-600 hover:text-purple-700 text-xl"
+                    className="text-indigo-600 hover:text-indigo-700 text-xl"
                   >
                     +
                   </button>
@@ -388,7 +549,7 @@ export default function Dashboard() {
                       onClick={() => { setSelectedProject(project.id); setSelectedCollection(null); setView('all'); }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                         selectedProject === project.id
-                          ? 'bg-purple-50 text-purple-700 font-medium'
+                          ? 'bg-indigo-50 text-indigo-700 font-medium'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -404,7 +565,7 @@ export default function Dashboard() {
                   <h3 className="text-sm font-semibold text-gray-700">COLLECTIONS</h3>
                   <button
                     onClick={() => setShowAddCollection(true)}
-                    className="text-purple-600 hover:text-purple-700 text-xl"
+                    className="text-indigo-600 hover:text-indigo-700 text-xl"
                   >
                     +
                   </button>
@@ -416,7 +577,7 @@ export default function Dashboard() {
                       onClick={() => { setSelectedCollection(collection.id); setSelectedProject(null); setView('all'); }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                         selectedCollection === collection.id
-                          ? 'bg-purple-50 text-purple-700 font-medium'
+                          ? 'bg-indigo-50 text-indigo-700 font-medium'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -430,7 +591,7 @@ export default function Dashboard() {
               <div>
                 <button
                   onClick={() => router.push('/tags')}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 rounded-lg font-medium hover:from-purple-200 hover:to-pink-200 transition flex items-center justify-center gap-2"
+                  className="w-full px-4 py-3 bg-gradient-to-r from-indigo-100 to-violet-100 text-indigo-700 rounded-lg font-medium hover:from-indigo-200 hover:to-violet-200 transition flex items-center justify-center gap-2"
                 >
                   <span>🏷️</span>
                   <span>Browse by Tags</span>
@@ -456,7 +617,7 @@ export default function Dashboard() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAddAsset(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-lg font-medium hover:shadow-lg transition"
                 >
                   + Add Asset
                 </button>
@@ -493,11 +654,11 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center overflow-hidden">
+                    <div className="aspect-video bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center overflow-hidden">
                       {asset.thumbnailUrl ? (
                         <img src={asset.thumbnailUrl} alt={asset.title} className="w-full h-full object-cover" />
                       ) : (
-                        <svg className="w-12 h-12 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       )}
@@ -544,7 +705,7 @@ export default function Dashboard() {
                               </span>
                             )}
                             {/* Current/Sale price */}
-                            <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-purple-600'}`}>
+                            <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-indigo-600'}`}>
                               {asset.currency}{asset.currentPrice.toFixed(2)}
                             </span>
                           </div>
@@ -570,7 +731,7 @@ export default function Dashboard() {
                           {asset.tags.slice(0, 3).map((tag, idx) => (
                             <span
                               key={idx}
-                              className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700"
+                              className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700"
                             >
                               {tag}
                             </span>
@@ -586,7 +747,7 @@ export default function Dashboard() {
                         href={asset.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
                       >
                         View Online →
                       </a>
