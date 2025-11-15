@@ -6,6 +6,8 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { Asset } from '@/lib/types';
 import { useRouter } from 'next/navigation';
+import ViewAssetModal from '@/components/ViewAssetModal';
+import EditAssetModal from '@/components/EditAssetModal';
 
 export default function TagsPage() {
   const { user, signOut } = useAuth();
@@ -13,6 +15,8 @@ export default function TagsPage() {
   const [assets, setAssets] = useState<Asset[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
 
   // Load assets
   useEffect(() => {
@@ -188,82 +192,93 @@ export default function TagsPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   {selectedAssets.map((asset) => (
                     <div
                       key={asset.id}
-                      className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition cursor-pointer"
-                      onClick={() => router.push(`/?asset=${asset.id}`)}
+                      className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition relative group cursor-pointer"
+                      onClick={() => setViewingAsset(asset)}
                     >
-                      {/* Thumbnail */}
-                      {asset.thumbnailUrl ? (
-                        <img
-                          src={asset.thumbnailUrl}
-                          alt={asset.title}
-                          className="w-full h-48 object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-                          <svg className="w-16 h-16 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
+                      {/* Status Ribbon */}
+                      <div className={`absolute top-3 left-0 z-10 px-3 py-1 text-xs font-semibold text-white shadow-md ${
+                        asset.status === 'wishlist' ? 'bg-gradient-to-r from-yellow-500 to-yellow-600' :
+                        asset.status === 'bought' ? 'bg-gradient-to-r from-green-500 to-green-600' :
+                        'bg-gradient-to-r from-blue-500 to-blue-600'
+                      }`} style={{ clipPath: 'polygon(0 0, 100% 0, 95% 100%, 0 100%)' }}>
+                        {asset.status === 'wishlist' ? '📌 Wishlist' :
+                         asset.status === 'bought' ? '✅ Bought' :
+                         '🎨 In Use'}
+                      </div>
+
+                      {/* Sale Badge */}
+                      {asset.isOnSale && asset.originalPrice && (
+                        <div className="absolute top-3 right-3 z-10 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                          -{Math.round((1 - asset.currentPrice! / asset.originalPrice) * 100)}% OFF
                         </div>
                       )}
 
-                      {/* Content */}
-                      <div className="p-4">
-                        <h3 className="font-semibold text-gray-800 mb-1 line-clamp-2">
-                          {asset.title}
-                        </h3>
-
-                        {/* Platform/Creator */}
-                        {asset.creator && (
-                          <p className="text-sm text-gray-500 mb-2">by {asset.creator}</p>
+                      <div className="aspect-video bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center overflow-hidden">
+                        {asset.thumbnailUrl ? (
+                          <img src={asset.thumbnailUrl} alt={asset.title} className="w-full h-full object-cover" />
+                        ) : (
+                          <svg className="w-12 h-12 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
                         )}
-
-                        {/* Price */}
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-gray-800 mb-1 truncate">{asset.title}</h3>
+                        {asset.creator && (
+                          <p className="text-xs text-gray-600 mb-2">by {asset.creator}</p>
+                        )}
                         {asset.currentPrice && (
                           <div className="mb-2">
-                            {asset.isOnSale && asset.originalPrice ? (
-                              <div className="flex items-center gap-2">
-                                <span className="text-red-600 font-bold">
-                                  {asset.currency}{asset.currentPrice}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {asset.isOnSale && asset.originalPrice && (
+                                <span className="text-sm font-medium text-gray-400" style={{ textDecoration: 'line-through' }}>
+                                  {asset.currency}{asset.originalPrice.toFixed(2)}
                                 </span>
-                                <span className="text-gray-400 text-sm line-through">
-                                  {asset.currency}{asset.originalPrice}
-                                </span>
-                                <span className="text-xs bg-red-100 text-red-700 px-2 py-0.5 rounded-full font-semibold">
-                                  -{Math.round((1 - asset.currentPrice / asset.originalPrice) * 100)}%
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="text-gray-700 font-medium">
-                                {asset.currency}{asset.currentPrice}
+                              )}
+                              <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-purple-600'}`}>
+                                {asset.currency}{asset.currentPrice.toFixed(2)}
+                              </span>
+                            </div>
+                            {asset.lowestPrice && asset.currentPrice > asset.lowestPrice && !asset.isOnSale && (
+                              <span className="text-xs text-gray-500 mt-1 block">
+                                Lowest seen: {asset.currency}{asset.lowestPrice.toFixed(2)}
                               </span>
                             )}
                           </div>
                         )}
-
-                        {/* Tags */}
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {asset.tags?.slice(0, 3).map((tag, idx) => (
-                            <span
-                              key={idx}
-                              className={`text-xs px-2 py-1 rounded-full ${
-                                tag === selectedTag
-                                  ? 'bg-purple-100 text-purple-700 font-semibold'
-                                  : 'bg-gray-100 text-gray-600'
-                              }`}
-                            >
-                              {tag}
-                            </span>
-                          ))}
-                          {asset.tags && asset.tags.length > 3 && (
-                            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">
-                              +{asset.tags.length - 3}
-                            </span>
-                          )}
-                        </div>
+                        {asset.platform && (
+                          <p className="text-xs text-gray-500 mb-2">{asset.platform}</p>
+                        )}
+                        {asset.tags && asset.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-2">
+                            {asset.tags.slice(0, 3).map((tag, idx) => (
+                              <span
+                                key={idx}
+                                className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {asset.tags.length > 3 && (
+                              <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">
+                                +{asset.tags.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <a
+                          href={asset.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                        >
+                          View Online →
+                        </a>
                       </div>
                     </div>
                   ))}
@@ -283,6 +298,27 @@ export default function TagsPage() {
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      {viewingAsset && (
+        <ViewAssetModal
+          asset={viewingAsset}
+          onClose={() => setViewingAsset(null)}
+          onEdit={() => {
+            setEditingAsset(viewingAsset);
+            setViewingAsset(null);
+          }}
+        />
+      )}
+
+      {editingAsset && (
+        <EditAssetModal
+          asset={editingAsset}
+          projects={[]}
+          collections={[]}
+          onClose={() => setEditingAsset(null)}
+        />
+      )}
     </div>
   );
 }

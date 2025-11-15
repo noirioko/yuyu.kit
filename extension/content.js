@@ -93,24 +93,77 @@ function extractAssetData() {
   // Extract price - try multiple strategies
   let priceFound = false;
 
-  // Strategy 1: Check meta tags (most reliable)
-  const metaPrice = document.querySelector('meta[property="product:price:amount"]');
-  const metaCurrency = document.querySelector('meta[property="product:price:currency"]');
+  // ACON3D-specific: Try to find both original and sale prices
+  if (data.platform === 'ACON3D') {
+    try {
+      console.log('🔍 ACON3D detected - looking for sale info...');
 
-  if (metaPrice) {
-    const priceValue = parseFloat(metaPrice.getAttribute('content'));
-    if (!isNaN(priceValue) && priceValue > 0) {
-      data.price = priceValue;
-      if (metaCurrency) {
-        const curr = metaCurrency.getAttribute('content');
-        if (curr === 'USD') data.currency = '$';
-        else if (curr === 'EUR') data.currency = '€';
-        else if (curr === 'GBP') data.currency = '£';
-        else if (curr === 'KRW') data.currency = '₩';
-        else if (curr === 'JPY') data.currency = '¥';
+      // Store original price if we find crossed-out text
+      let acon3dOriginalPrice = null;
+      const crossedOut = document.querySelectorAll('del, s, strike, [style*="line-through"]');
+      for (const el of crossedOut) {
+        const text = el.textContent?.trim();
+        if (text && text.length < 50) {
+          const match = text.match(/([\d,]+\.?\d*)/);
+          if (match) {
+            const val = parseFloat(match[1].replace(/,/g, ''));
+            if (!isNaN(val) && val > 0 && val < 1000000) {
+              acon3dOriginalPrice = val;
+              console.log('💰 Found crossed-out price:', acon3dOriginalPrice);
+              break;
+            }
+          }
+        }
       }
-      console.log('✅ Found price from meta tags:', data.price, data.currency);
-      priceFound = true;
+
+      // Try to find sale price with the specific class
+      const saleEl = document.querySelector('[class*="css-1nhqly6"], [class*="e147ribj2"]');
+      if (saleEl) {
+        const text = saleEl.textContent?.trim();
+        if (text) {
+          const match = text.match(/^([\d,]+\.?\d*)$/);
+          if (match) {
+            const val = parseFloat(match[1].replace(/,/g, ''));
+            if (!isNaN(val) && val > 0) {
+              data.price = val;
+              priceFound = true;
+              console.log('✅ Found ACON3D current price:', data.price);
+
+              // If we found both prices and original > current, it's a sale
+              if (acon3dOriginalPrice && acon3dOriginalPrice > val) {
+                data.originalPrice = acon3dOriginalPrice;
+                data.isOnSale = true;
+                console.log('🎉 ACON3D sale detected! Original:', acon3dOriginalPrice, 'Current:', val);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.log('⚠️ ACON3D-specific detection failed:', e);
+    }
+  }
+
+  // Strategy 1: Check meta tags (most reliable)
+  if (!priceFound) {
+    const metaPrice = document.querySelector('meta[property="product:price:amount"]');
+    const metaCurrency = document.querySelector('meta[property="product:price:currency"]');
+
+    if (metaPrice) {
+      const priceValue = parseFloat(metaPrice.getAttribute('content'));
+      if (!isNaN(priceValue) && priceValue > 0) {
+        data.price = priceValue;
+        if (metaCurrency) {
+          const curr = metaCurrency.getAttribute('content');
+          if (curr === 'USD') data.currency = '$';
+          else if (curr === 'EUR') data.currency = '€';
+          else if (curr === 'GBP') data.currency = '£';
+          else if (curr === 'KRW') data.currency = '₩';
+          else if (curr === 'JPY') data.currency = '¥';
+        }
+        console.log('✅ Found price from meta tags:', data.price, data.currency);
+        priceFound = true;
+      }
     }
   }
 
@@ -230,11 +283,12 @@ function extractAssetData() {
       console.log('🔍 Checking for sale/discount indicators...');
 
       const allPrices = [];
+      const crossedOutPrices = [];
       const bodyText = document.body.innerText || '';
 
       // Look for crossed-out/strikethrough prices (original price) - limit search
       try {
-        const priceElements = document.querySelectorAll('del, s, [style*="line-through"]');
+        const priceElements = document.querySelectorAll('del, s, [style*="line-through"], [style*="text-decoration: line-through"], [style*="text-decoration:line-through"]');
         for (const el of priceElements) {
           const text = el.textContent?.trim();
           if (text && text.length < 50) {
@@ -242,8 +296,8 @@ function extractAssetData() {
             if (priceMatch) {
               const priceValue = parseFloat(priceMatch[1].replace(/,/g, ''));
               if (!isNaN(priceValue) && priceValue > 0 && priceValue < 1000000) {
-                allPrices.push({ value: priceValue, type: 'original' });
-                console.log('💰 Found crossed-out price:', priceValue);
+                crossedOutPrices.push(priceValue);
+                console.log('💰 Found crossed-out price (original):', priceValue);
               }
             }
           }
@@ -252,63 +306,45 @@ function extractAssetData() {
         console.log('⚠️ Error scanning strikethrough prices:', e);
       }
 
-      // Look for "was $X" or "before $X" patterns
-      try {
-        const wasPatterns = [
-          /(?:was|before|originally)\s*[\$₩€£]?\s*([\d,]+\.?\d*)/i,
-          /[\$₩€£]?\s*([\d,]+\.?\d*)\s*(?:was|before|originally)/i
-        ];
-
-        for (const pattern of wasPatterns) {
-          const match = bodyText.match(pattern);
-          if (match) {
-            const priceValue = parseFloat(match[1].replace(/,/g, ''));
-            if (!isNaN(priceValue) && priceValue > data.price && priceValue < 1000000) {
-              allPrices.push({ value: priceValue, type: 'original' });
-              console.log('💰 Found "was" price:', priceValue);
-              break; // Only take first match
-            }
-          }
-        }
-      } catch (e) {
-        console.log('⚠️ Error checking "was" prices:', e);
-      }
-
-      // Look for percentage discount indicators
-      try {
-        const discountMatch = bodyText.match(/(\d+)%\s*(?:off|discount|sale)/i);
-        if (discountMatch && !data.originalPrice) {
-          const discountPercent = parseInt(discountMatch[1]);
-          if (discountPercent > 0 && discountPercent < 100) {
-            // Calculate original price from discount percentage
-            const calculatedOriginal = data.price / (1 - discountPercent / 100);
-            if (calculatedOriginal > data.price) {
-              data.originalPrice = Math.round(calculatedOriginal * 100) / 100;
-              data.isOnSale = true;
-              console.log(`💰 Calculated original price from ${discountPercent}% discount:`, data.originalPrice);
-            }
-          }
-        }
-      } catch (e) {
-        console.log('⚠️ Error calculating discount:', e);
-      }
-
-      // If we found crossed-out or "was" prices, use the highest one as original price
-      if (allPrices.length > 0 && !data.originalPrice) {
-        const highestPrice = Math.max(...allPrices.map(p => p.value));
-        if (highestPrice > data.price) {
-          data.originalPrice = highestPrice;
+      // If we found crossed-out prices, use them as original price
+      if (crossedOutPrices.length > 0) {
+        const highestCrossedOut = Math.max(...crossedOutPrices);
+        // Only use if it's higher than current price (sanity check)
+        if (highestCrossedOut > data.price) {
+          data.originalPrice = highestCrossedOut;
           data.isOnSale = true;
-          console.log('✅ Sale detected! Original:', data.originalPrice, 'Sale:', data.price);
+          console.log('✅ Sale detected! Original:', data.originalPrice, 'Current:', data.price);
+          return; // Early return - we found the sale info
         }
       }
 
-      // Check for sale/discount class names (lightweight check)
-      if (data.isOnSale === false) {
+      // Look for percentage discount indicators (fallback)
+      if (!data.originalPrice) {
+        try {
+          const discountMatch = bodyText.match(/(\d+)%\s*(?:off|discount|sale)/i);
+          if (discountMatch) {
+            const discountPercent = parseInt(discountMatch[1]);
+            if (discountPercent > 0 && discountPercent < 100) {
+              // Calculate original price from discount percentage
+              const calculatedOriginal = data.price / (1 - discountPercent / 100);
+              if (calculatedOriginal > data.price) {
+                data.originalPrice = Math.round(calculatedOriginal * 100) / 100;
+                data.isOnSale = true;
+                console.log(`💰 Calculated original price from ${discountPercent}% discount:`, data.originalPrice);
+              }
+            }
+          }
+        } catch (e) {
+          console.log('⚠️ Error calculating discount:', e);
+        }
+      }
+
+      // Check for sale/discount class names as final fallback
+      if (!data.isOnSale) {
         try {
           const hasSaleIndicator = document.querySelector('[class*="sale"], [class*="discount"]');
           if (hasSaleIndicator) {
-            console.log('🏷️ Sale indicator found in DOM');
+            console.log('🏷️ Sale indicator found in DOM (but no price details)');
             data.isOnSale = true;
           }
         } catch (e) {
@@ -452,6 +488,28 @@ function extractAssetData() {
   } catch (error) {
     console.error('⚠️ Creator extraction failed:', error);
     data.creator = '';
+  }
+
+  // VALIDATION: Filter out invalid creators (sale timers, discounts, etc.)
+  if (data.creator) {
+    const invalidPatterns = [
+      /^\d+\s*days?$/i,        // "2 day", "3 days"
+      /^\d+\s*hours?$/i,       // "2 hour", "3 hours"
+      /^\d+\s*mins?$/i,        // "2 min", "3 minutes"
+      /^\d+[hm]$/i,            // "2h", "3m"
+      /^sale$/i,               // "sale"
+      /^discount$/i,           // "discount"
+      /^off$/i,                // "off"
+      /^\d+%$/,                // "50%"
+    ];
+
+    for (const pattern of invalidPatterns) {
+      if (pattern.test(data.creator.trim())) {
+        console.log('⚠️ Invalid creator detected (sale timer/discount):', data.creator, '- removing');
+        data.creator = '';
+        break;
+      }
+    }
   }
 
   console.log('📦 Final extracted data:', data);

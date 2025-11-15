@@ -122,6 +122,11 @@ async function renderMain() {
       💾 Save Current Page
     </button>
 
+    <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 10px; margin: 12px 0; font-size: 11px; line-height: 1.4; opacity: 0.9;">
+      <div style="margin-bottom: 4px;">ℹ️ <strong>Note:</strong></div>
+      Auto-fill isn't perfect! Please double-check the creator/brand and price fields before saving.
+    </div>
+
     <button class="btn btn-secondary" id="openDashboardBtn">
       🏠 Open Dashboard
     </button>

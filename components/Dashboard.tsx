@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, addDoc, deleteDoc, doc, updateDoc, increment, Timestamp } from 'firebase/firestore';
 import { Asset, Project, Collection as CollectionType } from '@/lib/types';
 import AddAssetModal from './AddAssetModal';
 import EditAssetModal from './EditAssetModal';
@@ -298,14 +298,6 @@ export default function Dashboard() {
                 title="Auto-tag all assets with platform and creator"
               >
                 🏷️ Auto-Tag All
-              </button>
-              <button
-                onClick={handleCheckPrices}
-                disabled={checkingPrices}
-                className="text-xs text-gray-500 hover:text-purple-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                title="Check prices for all assets"
-              >
-                {checkingPrices ? '⏳ Checking...' : '💰 Check Prices'}
               </button>
               <button
                 onClick={() => {
