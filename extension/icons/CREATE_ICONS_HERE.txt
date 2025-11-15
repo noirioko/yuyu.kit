@@ -1,0 +1,18 @@
+Create 3 PNG icon files here:
+
+- icon16.png (16x16 pixels)
+- icon48.png (48x48 pixels)
+- icon128.png (128x128 pixels)
+
+Suggested design:
+- Purple/pink gradient background (matching YuyuAsset branding)
+- White heart icon or folder icon in the center
+- Rounded corners
+
+Quick way to create them:
+1. Go to https://favicon.io/favicon-generator/
+2. Use purple background (#9333ea)
+3. Add a heart emoji 💜 or folder emoji 📁
+4. Download and rename files to match the sizes above
+
+Or use any image editor like Figma, Photoshop, or Canva!

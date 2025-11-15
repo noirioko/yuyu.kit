@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "YuyuAsset Manager",
+  "version": "1.0.2",
+  "description": "One-click save assets from ACON3D, Gumroad, VGEN, and more to your YuyuAsset Manager!",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "notifications"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://acon3d.com/*",
+        "*://*.acon3d.com/*",
+        "*://gumroad.com/*",
+        "*://*.gumroad.com/*",
+        "*://vgen.co/*",
+        "*://*.vgen.co/*",
+        "*://artstation.com/*",
+        "*://*.artstation.com/*",
+        "*://blendermarket.com/*",
+        "*://*.blendermarket.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}
