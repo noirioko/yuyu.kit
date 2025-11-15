@@ -102,13 +102,10 @@ export default function AboutPage() {
 
               <div className="bg-gradient-to-r from-blue-50 to-pink-50 rounded-xl p-6 mt-8">
                 <p className="text-center text-gray-700">
-                  Made with 💙💖 by MyPebbles Team
+                  Made by YuyuKit
                 </p>
                 <p className="text-center text-sm text-gray-500 mt-2">
-                  For support or questions, visit our{' '}
-                  <a href="https://github.com/noirioko/yuyu.kit" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 underline">
-                    GitHub repository
-                  </a>
+                  © melty haeon 2025
                 </p>
               </div>
             </div>

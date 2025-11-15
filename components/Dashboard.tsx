@@ -569,7 +569,7 @@ export default function Dashboard() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAddAsset(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+                  className="glitter-hover px-4 py-2 bg-gradient-to-r from-blue-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition"
                 >
                   + Add Asset
                 </button>

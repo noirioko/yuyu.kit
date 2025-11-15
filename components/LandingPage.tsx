@@ -54,7 +54,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
                 onClick={signInWithGoogle}
-                className="glitter-hover inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-pink-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-pink-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               >
                 <svg className="w-6 h-6" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -106,7 +106,7 @@ export default function LandingPage() {
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-8 mt-32 max-w-6xl mx-auto">
-          <div className="glitter-hover bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all">
             <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl flex items-center justify-center mb-6">
               <svg className="w-7 h-7 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
@@ -116,7 +116,7 @@ export default function LandingPage() {
             <p className="text-gray-600 leading-relaxed">Keep track of assets you want to buy. Never forget what caught your eye!</p>
           </div>
 
-          <div className="glitter-hover bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all">
             <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mb-6">
               <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
@@ -126,7 +126,7 @@ export default function LandingPage() {
             <p className="text-gray-600 leading-relaxed">Group assets by project. Keep everything organized and easy to find.</p>
           </div>
 
-          <div className="glitter-hover bg-white rounded-2xl p-8 shadow-md border border-gray-100">
+          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all">
             <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl flex items-center justify-center mb-6">
               <svg className="w-7 h-7 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
