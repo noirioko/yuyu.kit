@@ -289,6 +289,19 @@ function extractAssetData() {
     console.log('⚠️ No price found on this page');
   }
 
+  // CSP-specific: Check for FREE items
+  if (data.platform === 'Clip Studio Paint') {
+    const bodyText = document.body.innerText || '';
+    const isFree = /\bFREE\b/i.test(bodyText) || /無料/i.test(bodyText); // FREE in English or Japanese
+
+    if (isFree) {
+      console.log('✅ CSP free item detected');
+      data.price = 0;
+      data.currency = 'Free';
+      priceFound = true;
+    }
+  }
+
   // SALE DETECTION: Look for discount indicators and extract original price
   if (data.price && data.price > 0) {
     try {
@@ -502,7 +515,7 @@ function extractAssetData() {
     data.creator = '';
   }
 
-  // VALIDATION: Filter out invalid creators (sale timers, discounts, etc.)
+  // VALIDATION: Filter out invalid creators (sale timers, discounts, CSS class names, etc.)
   if (data.creator) {
     const invalidPatterns = [
       /^\d+\s*days?$/i,        // "2 day", "3 days"
@@ -513,6 +526,9 @@ function extractAssetData() {
       /^discount$/i,           // "discount"
       /^off$/i,                // "off"
       /^\d+%$/,                // "50%"
+      /_/,                     // CSS class names with underscores (e.g., "authorTop_Name")
+      /^[a-z]+[A-Z]/,          // camelCase (e.g., "authorTop", "creatorName")
+      /^(author|creator|brand|artist|seller|name|top|bottom|left|right|inner|outer|wrapper|container|box|div|span)$/i, // Common CSS/HTML terms
     ];
 
     for (const pattern of invalidPatterns) {

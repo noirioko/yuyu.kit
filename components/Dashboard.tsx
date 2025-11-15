@@ -647,24 +647,36 @@ export default function Dashboard() {
                       {asset.creator && (
                         <p className="text-xs text-gray-600 mb-2">by {asset.creator}</p>
                       )}
-                      {asset.currentPrice && (
+                      {(asset.currentPrice || asset.currentPrice === 0) && (
                         <div className="mb-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             {/* Show original price with strikethrough if on sale */}
                             {asset.isOnSale && asset.originalPrice && (
                               <span className="text-sm font-medium text-gray-400" style={{ textDecoration: 'line-through' }}>
-                                {asset.currency}{asset.originalPrice.toFixed(2)}
+                                {asset.currency === 'Free'
+                                  ? 'FREE'
+                                  : asset.currency === 'Gold' || asset.currency === 'Clippy'
+                                  ? `${asset.originalPrice.toFixed(0)} ${asset.currency.toUpperCase()}`
+                                  : `${asset.currency}${asset.originalPrice.toFixed(2)}`}
                               </span>
                             )}
                             {/* Current/Sale price */}
-                            <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-blue-600'}`}>
-                              {asset.currency}{asset.currentPrice.toFixed(2)}
+                            <span className={`text-lg font-bold ${asset.currentPrice === 0 ? 'text-green-600' : asset.isOnSale ? 'text-red-600' : 'text-blue-600'}`}>
+                              {asset.currency === 'Free' || asset.currentPrice === 0
+                                ? 'FREE'
+                                : asset.currency === 'Gold' || asset.currency === 'Clippy'
+                                ? `${asset.currentPrice.toFixed(0)} ${asset.currency.toUpperCase()}`
+                                : `${asset.currency}${asset.currentPrice.toFixed(2)}`}
                             </span>
                           </div>
                           {/* Show lowest price if not on sale and current > lowest */}
                           {asset.lowestPrice && asset.currentPrice > asset.lowestPrice && !asset.isOnSale && (
                             <span className="text-xs text-gray-500 mt-1 block">
-                              Lowest seen: {asset.currency}{asset.lowestPrice.toFixed(2)}
+                              Lowest seen: {asset.currency === 'Free'
+                                ? 'FREE'
+                                : asset.currency === 'Gold' || asset.currency === 'Clippy'
+                                ? `${asset.lowestPrice.toFixed(0)} ${asset.currency.toUpperCase()}`
+                                : `${asset.currency}${asset.lowestPrice.toFixed(2)}`}
                             </span>
                           )}
                         </div>
