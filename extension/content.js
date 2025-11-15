@@ -34,11 +34,71 @@ function extractAssetData() {
 
   console.log('🏷️ Platform detected:', data.platform);
 
+  // CSP-SPECIFIC EXTRACTION (do this FIRST before generic methods)
+  if (data.platform === 'Clip Studio Paint') {
+    console.log('🎨 Using CSP-specific extraction...');
+
+    // CSP Title: .materialHeaderTitle
+    const cspTitle = document.querySelector('.materialHeaderTitle');
+    if (cspTitle) {
+      data.title = cspTitle.textContent.trim();
+      console.log('✅ Found CSP title from .materialHeaderTitle:', data.title);
+    }
+
+    // CSP Author: .author_title or [class*="author_title"]
+    const cspAuthor = document.querySelector('.author_title, [class*="author_title"]');
+    if (cspAuthor) {
+      const authorText = cspAuthor.textContent?.trim();
+      if (authorText && authorText.length >= 2 && authorText.length <= 30) {
+        data.creator = authorText;
+        console.log('✅ Found CSP author from .author_title:', data.creator);
+      }
+    }
+
+    // CSP Price: Look for price-specific elements first
+    // Check for FREE indicator in specific elements
+    const priceArea = document.querySelector('[class*="price"]');
+    if (priceArea) {
+      const priceText = priceArea.textContent || '';
+      console.log('🔍 CSP price area text:', priceText);
+
+      // Check if it says FREE or 無料
+      if (/FREE|無料/i.test(priceText)) {
+        data.price = 0;
+        data.currency = 'Free';
+        console.log('✅ CSP FREE item detected from price area');
+      }
+      // Extract CLIPPY or GOLD price
+      else {
+        const clippyMatch = priceText.match(/(\d+)\s*CLIPPY/i);
+        const goldMatch = priceText.match(/(\d+)\s*GOLD/i);
+
+        if (clippyMatch && parseInt(clippyMatch[1]) === 0) {
+          data.price = 0;
+          data.currency = 'Free';
+          console.log('✅ CSP FREE item detected (0 CLIPPY)');
+        } else if (goldMatch && parseInt(goldMatch[1]) === 0) {
+          data.price = 0;
+          data.currency = 'Free';
+          console.log('✅ CSP FREE item detected (0 GOLD)');
+        } else if (clippyMatch) {
+          data.price = parseInt(clippyMatch[1]);
+          data.currency = 'Clippy';
+          console.log('✅ CSP CLIPPY price:', data.price);
+        } else if (goldMatch) {
+          data.price = parseInt(goldMatch[1]);
+          data.currency = 'Gold';
+          console.log('✅ CSP GOLD price:', data.price);
+        }
+      }
+    }
+  }
+
   // Try meta tags first (most reliable)
   const ogTitle = document.querySelector('meta[property="og:title"]');
   const ogImage = document.querySelector('meta[property="og:image"]');
 
-  if (ogTitle) {
+  if (ogTitle && !data.title) {
     data.title = ogTitle.getAttribute('content');
     console.log('✅ Found title from og:title:', data.title);
   }
@@ -95,22 +155,10 @@ function extractAssetData() {
   // Extract price - try multiple strategies
   let priceFound = false;
 
-  // CSP-specific: Check for FREE items FIRST (before any price extraction)
-  if (data.platform === 'Clip Studio Paint') {
-    const bodyText = document.body.innerText || '';
-    const isFree = /\bFREE\b/i.test(bodyText) ||
-                   /無料/i.test(bodyText) ||
-                   /0\s*CLIPPY/i.test(bodyText) ||
-                   /0\s*GOLD/i.test(bodyText) ||
-                   /CLIPPY\s*0\b/i.test(bodyText) ||
-                   /GOLD\s*0\b/i.test(bodyText);
-
-    if (isFree) {
-      console.log('✅ CSP free item detected');
-      data.price = 0;
-      data.currency = 'Free';
-      priceFound = true;
-    }
+  // CSP-specific: Check if we already extracted price in CSP-specific section
+  if (data.platform === 'Clip Studio Paint' && data.price !== null) {
+    priceFound = true;
+    console.log('✅ CSP price already extracted:', data.price, data.currency);
   }
 
   // ACON3D-specific: Try to find both original and sale prices
@@ -393,20 +441,7 @@ function extractAssetData() {
   try {
     console.log('👤 Extracting creator/brand...');
 
-    // Strategy 1a: CSP specific - Look for author with specific link
-    if (data.platform === 'Clip Studio Paint') {
-      // Look for author link
-      const authorLink = document.querySelector('a[href*="/profile/"]');
-      if (authorLink) {
-        const authorName = authorLink.textContent?.trim();
-        if (authorName && authorName.length >= 2 && authorName.length <= 30) {
-          data.creator = authorName;
-          console.log('✅ Found CSP author from profile link:', data.creator);
-        }
-      }
-    }
-
-    // Strategy 1b: ACON3D specific - Look for brand name
+    // Strategy 1: ACON3D specific - Look for brand name
     if (!data.creator && data.platform === 'ACON3D') {
       // Look for "Brand:" label
       const bodyText = document.body.innerText || '';
@@ -590,6 +625,9 @@ function extractAssetData() {
       /_/,                     // CSS class names with underscores (e.g., "authorTop_Name")
       /^[a-z]+[A-Z]/,          // camelCase (e.g., "authorTop", "creatorName")
       /^(author|creator|brand|artist|seller|name|top|bottom|left|right|inner|outer|wrapper|container|box|div|span)$/i, // Common CSS/HTML terms
+      /^content\s+id$/i,       // "Content ID"
+      /^content$/i,            // "Content"
+      /^id$/i,                 // "ID"
     ];
 
     for (const pattern of invalidPatterns) {
