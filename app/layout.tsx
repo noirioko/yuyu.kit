@@ -6,8 +6,8 @@ import { AuthProvider } from "@/lib/AuthContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "YuyuAsset Manager - Track & Save on Digital Assets",
-  description: "Smart asset manager for digital artists. Track prices, organize assets, and never miss a sale.",
+  title: "MyPebbles - ACON3D & CSP Asset Manager",
+  description: "Organize and manage your digital assets from ACON3D, CSP, and more. Keep track of wishlists, organize by project, and never lose track of what you've bought!",
   icons: {
     icon: '/yuyu_mojis/yuwon_veryhappy.png',
     shortcut: '/yuyu_mojis/yuwon_veryhappy.png',

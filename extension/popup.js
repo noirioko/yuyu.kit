@@ -1,4 +1,4 @@
-// YuyuAsset Manager - Popup Script
+// MyPebbles Manager - Popup Script
 
 const YUYU_ASSET_URL = 'http://localhost:3000'; // Change to your production URL later
 
@@ -20,7 +20,7 @@ function renderSetup() {
     <div style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 20px; backdrop-filter: blur(10px);">
       <h2 style="font-size: 18px; margin-bottom: 12px;">Welcome! 👋</h2>
       <p style="font-size: 14px; margin-bottom: 16px; opacity: 0.9;">
-        Connect the extension to your YuyuAsset account to start saving assets!
+        Connect the extension to your MyPebbles account to start saving assets!
       </p>
 
       <div style="margin-bottom: 16px;">
@@ -38,7 +38,7 @@ function renderSetup() {
       <button class="btn" id="saveBtn">Connect Account</button>
 
       <p style="font-size: 12px; opacity: 0.7; margin-top: 12px;">
-        Find your User ID in the YuyuAsset dashboard (click your profile)
+        Find your User ID in the MyPebbles dashboard (click your profile)
       </p>
     </div>
   `;
@@ -111,7 +111,7 @@ async function renderMain() {
             🔄
           </button>
         </div>
-        <select id="projectSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: none; font-size: 12px; color: #6366f1;">
+        <select id="projectSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: none; font-size: 12px; color: #3b82f6;">
           <option value="">No Project</option>
           ${projectsList.map(p => `<option value="${p.id}" ${selectedProject === p.id ? 'selected' : ''}>${p.icon || '📁'} ${p.name}</option>`).join('')}
         </select>
@@ -136,7 +136,7 @@ async function renderMain() {
     </button>
 
     <div class="footer">
-      Made with 💜 by YuyuAsset
+      Made with 💜 by MyPebbles
     </div>
   `;
 
@@ -388,7 +388,7 @@ async function saveAsset(assetData) {
     }
   } catch (error) {
     console.error('💥 Error saving asset:', error);
-    alert('Network error. Make sure YuyuAsset is running on localhost:3000');
+    alert('Network error. Make sure MyPebbles is running on localhost:3000');
     return false;
   }
 }

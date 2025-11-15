@@ -27,7 +27,6 @@ export default function Dashboard() {
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
-  const [checkingPrices, setCheckingPrices] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [notifications, setNotifications] = useState<Array<{id: string, type: 'duplicate', assetId: string, assetTitle: string, url: string, timestamp: Date}>>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -154,53 +153,6 @@ export default function Dashboard() {
     }
   };
 
-
-  const handleCheckPrices = async () => {
-    if (!user || !db) return;
-
-    setCheckingPrices(true);
-    try {
-      console.log('🔍 Starting price check...');
-
-      const response = await fetch('/api/check-prices', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.uid })
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        const { checked, updated, onSale, errors } = result.results;
-
-        let message = `Price check complete!\n\n`;
-        message += `✓ Checked: ${checked} assets\n`;
-        if (updated > 0) message += `📊 Updated: ${updated} prices\n`;
-        if (onSale > 0) message += `🎉 On sale: ${onSale} items\n`;
-        if (errors > 0) message += `❌ Errors: ${errors}\n`;
-
-        // Show sales details if any
-        const sales = result.results.details.filter((d: any) => d.status === 'sale');
-        if (sales.length > 0) {
-          message += `\nSales found:\n`;
-          sales.forEach((sale: any) => {
-            message += `• ${sale.title}: ${sale.discount}% off!\n`;
-          });
-        }
-
-        alert(message);
-        console.log('✅ Price check results:', result.results);
-      } else {
-        throw new Error(result.error || 'Failed to check prices');
-      }
-    } catch (error) {
-      console.error('❌ Error checking prices:', error);
-      alert(`Failed to check prices: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setCheckingPrices(false);
-    }
-  };
-
   const handleAutoTagAll = async () => {
     if (!user || !db) return;
 
@@ -301,16 +253,16 @@ export default function Dashboard() {
             <div className="flex items-center gap-3">
               <img
                 src="/yuyu_mojis/yuwon_veryhappy.png"
-                alt="YuyuAsset"
+                alt="MyPebbles"
                 className="h-10 w-auto rounded-lg object-contain"
               />
-              <span className="text-2xl font-semibold text-gray-800">YuyuAsset</span>
+              <span className="text-2xl font-semibold text-gray-800">MyPebbles</span>
             </div>
 
             <div className="flex items-center gap-4">
               <button
                 onClick={handleAutoTagAll}
-                className="text-xs text-gray-500 hover:text-indigo-600 transition"
+                className="text-xs text-gray-500 hover:text-blue-600 transition"
                 title="Auto-tag all assets with platform and creator"
               >
                 🏷️ Auto-Tag All
@@ -322,7 +274,7 @@ export default function Dashboard() {
                     alert('User ID copied! Paste it in the browser extension.');
                   }
                 }}
-                className="text-xs text-gray-500 hover:text-indigo-600 transition"
+                className="text-xs text-gray-500 hover:text-blue-600 transition"
                 title="Copy User ID for extension"
               >
                 📋 Copy User ID
@@ -332,7 +284,7 @@ export default function Dashboard() {
               <div className="relative">
                 <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="relative text-gray-600 hover:text-indigo-600 transition"
+                  className="relative text-gray-600 hover:text-blue-600 transition"
                   title="Notifications"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -352,7 +304,7 @@ export default function Dashboard() {
                       {notifications.length > 0 && (
                         <button
                           onClick={() => setNotifications([])}
-                          className="text-xs text-indigo-600 hover:text-indigo-700"
+                          className="text-xs text-blue-600 hover:text-blue-700"
                         >
                           Clear All
                         </button>
@@ -376,7 +328,7 @@ export default function Dashboard() {
                                 <p className="text-sm text-gray-600 mb-2">
                                   You seem to have already bookmarked this asset
                                 </p>
-                                <p className="text-sm font-semibold text-indigo-600 mb-2">
+                                <p className="text-sm font-semibold text-blue-600 mb-2">
                                   {notif.assetTitle}
                                 </p>
                                 <div className="flex gap-2">
@@ -386,7 +338,7 @@ export default function Dashboard() {
                                       if (asset) setViewingAsset(asset);
                                       setShowNotifications(false);
                                     }}
-                                    className="text-xs px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full hover:bg-indigo-200 transition"
+                                    className="text-xs px-3 py-1 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition"
                                   >
                                     View Asset
                                   </button>
@@ -440,7 +392,7 @@ export default function Dashboard() {
                         router.push('/about');
                         setShowProfileMenu(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 transition flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition flex items-center gap-2"
                     >
                       <span>ℹ️</span>
                       <span>About</span>
@@ -451,7 +403,7 @@ export default function Dashboard() {
                         router.push('/tags');
                         setShowProfileMenu(false);
                       }}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-indigo-50 transition flex items-center gap-2"
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 transition flex items-center gap-2"
                     >
                       <span>🏷️</span>
                       <span>Browse Tags</span>
@@ -502,7 +454,7 @@ export default function Dashboard() {
                     onClick={() => { setView('all'); setSelectedProject(null); setSelectedCollection(null); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                       view === 'all' && !selectedProject && !selectedCollection
-                        ? 'bg-indigo-50 text-indigo-700 font-medium'
+                        ? 'bg-blue-50 text-blue-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -512,7 +464,7 @@ export default function Dashboard() {
                     onClick={() => { setView('wishlist'); setSelectedProject(null); setSelectedCollection(null); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                       view === 'wishlist' && !selectedProject && !selectedCollection
-                        ? 'bg-indigo-50 text-indigo-700 font-medium'
+                        ? 'bg-blue-50 text-blue-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -522,7 +474,7 @@ export default function Dashboard() {
                     onClick={() => { setView('bought'); setSelectedProject(null); setSelectedCollection(null); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                       view === 'bought' && !selectedProject && !selectedCollection
-                        ? 'bg-indigo-50 text-indigo-700 font-medium'
+                        ? 'bg-blue-50 text-blue-700 font-medium'
                         : 'text-gray-600 hover:bg-gray-50'
                     }`}
                   >
@@ -537,7 +489,7 @@ export default function Dashboard() {
                   <h3 className="text-sm font-semibold text-gray-700">PROJECTS</h3>
                   <button
                     onClick={() => setShowAddProject(true)}
-                    className="text-indigo-600 hover:text-indigo-700 text-xl"
+                    className="text-blue-600 hover:text-blue-700 text-xl"
                   >
                     +
                   </button>
@@ -549,7 +501,7 @@ export default function Dashboard() {
                       onClick={() => { setSelectedProject(project.id); setSelectedCollection(null); setView('all'); }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                         selectedProject === project.id
-                          ? 'bg-indigo-50 text-indigo-700 font-medium'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -565,7 +517,7 @@ export default function Dashboard() {
                   <h3 className="text-sm font-semibold text-gray-700">COLLECTIONS</h3>
                   <button
                     onClick={() => setShowAddCollection(true)}
-                    className="text-indigo-600 hover:text-indigo-700 text-xl"
+                    className="text-blue-600 hover:text-blue-700 text-xl"
                   >
                     +
                   </button>
@@ -577,7 +529,7 @@ export default function Dashboard() {
                       onClick={() => { setSelectedCollection(collection.id); setSelectedProject(null); setView('all'); }}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm transition ${
                         selectedCollection === collection.id
-                          ? 'bg-indigo-50 text-indigo-700 font-medium'
+                          ? 'bg-blue-50 text-blue-700 font-medium'
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -591,7 +543,7 @@ export default function Dashboard() {
               <div>
                 <button
                   onClick={() => router.push('/tags')}
-                  className="w-full px-4 py-3 bg-gradient-to-r from-indigo-100 to-violet-100 text-indigo-700 rounded-lg font-medium hover:from-indigo-200 hover:to-violet-200 transition flex items-center justify-center gap-2"
+                  className="w-full px-4 py-3 bg-gradient-to-r from-blue-100 to-pink-100 text-blue-700 rounded-lg font-medium hover:from-blue-200 hover:to-pink-200 transition flex items-center justify-center gap-2"
                 >
                   <span>🏷️</span>
                   <span>Browse by Tags</span>
@@ -617,7 +569,7 @@ export default function Dashboard() {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShowAddAsset(true)}
-                  className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-violet-600 text-white rounded-lg font-medium hover:shadow-lg transition"
+                  className="px-4 py-2 bg-gradient-to-r from-blue-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition"
                 >
                   + Add Asset
                 </button>
@@ -654,11 +606,11 @@ export default function Dashboard() {
                       </div>
                     )}
 
-                    <div className="aspect-video bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center overflow-hidden">
+                    <div className="aspect-video bg-gradient-to-br from-blue-100 to-pink-100 flex items-center justify-center overflow-hidden">
                       {asset.thumbnailUrl ? (
                         <img src={asset.thumbnailUrl} alt={asset.title} className="w-full h-full object-cover" />
                       ) : (
-                        <svg className="w-12 h-12 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-12 h-12 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       )}
@@ -705,7 +657,7 @@ export default function Dashboard() {
                               </span>
                             )}
                             {/* Current/Sale price */}
-                            <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-indigo-600'}`}>
+                            <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-blue-600'}`}>
                               {asset.currency}{asset.currentPrice.toFixed(2)}
                             </span>
                           </div>
@@ -731,7 +683,7 @@ export default function Dashboard() {
                           {asset.tags.slice(0, 3).map((tag, idx) => (
                             <span
                               key={idx}
-                              className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700"
+                              className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700"
                             >
                               {tag}
                             </span>
@@ -747,7 +699,7 @@ export default function Dashboard() {
                         href={asset.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                        className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                       >
                         View Online →
                       </a>

@@ -78,7 +78,7 @@ export default function TagsPage() {
           <h2 className="text-2xl font-bold text-gray-800 mb-4">Please sign in</h2>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Go to Home
           </button>
@@ -100,10 +100,10 @@ export default function TagsPage() {
               >
                 <img
                   src="/yuyu_mojis/yuwon_veryhappy.png"
-                  alt="YuyuAsset"
+                  alt="MyPebbles"
                   className="h-10 w-auto rounded-lg object-contain"
                 />
-                <span className="text-2xl font-semibold text-gray-800">YuyuAsset</span>
+                <span className="text-2xl font-semibold text-gray-800">MyPebbles</span>
               </button>
               <span className="text-gray-400">/</span>
               <span className="text-xl font-medium text-gray-600">Tags</span>
@@ -143,7 +143,7 @@ export default function TagsPage() {
                   placeholder="Search tags..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -160,14 +160,14 @@ export default function TagsPage() {
                       onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
                       className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition ${
                         selectedTag === tag
-                          ? 'bg-indigo-600 text-white shadow-sm'
-                          : 'bg-gray-100 text-gray-700 hover:bg-indigo-100 hover:text-indigo-700'
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : 'bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700'
                       }`}
                     >
                       <span>{tag}</span>
                       <span className={`text-xs px-1.5 py-0.5 rounded-full ${
                         selectedTag === tag
-                          ? 'bg-indigo-500 text-white'
+                          ? 'bg-blue-500 text-white'
                           : 'bg-gray-200 text-gray-600'
                       }`}>
                         {count}
@@ -217,11 +217,11 @@ export default function TagsPage() {
                         </div>
                       )}
 
-                      <div className="aspect-video bg-gradient-to-br from-indigo-100 to-violet-100 flex items-center justify-center overflow-hidden">
+                      <div className="aspect-video bg-gradient-to-br from-blue-100 to-pink-100 flex items-center justify-center overflow-hidden">
                         {asset.thumbnailUrl ? (
                           <img src={asset.thumbnailUrl} alt={asset.title} className="w-full h-full object-cover" />
                         ) : (
-                          <svg className="w-12 h-12 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="w-12 h-12 text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                           </svg>
                         )}
@@ -239,7 +239,7 @@ export default function TagsPage() {
                                   {asset.currency}{asset.originalPrice.toFixed(2)}
                                 </span>
                               )}
-                              <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-indigo-600'}`}>
+                              <span className={`text-lg font-bold ${asset.isOnSale ? 'text-red-600' : 'text-blue-600'}`}>
                                 {asset.currency}{asset.currentPrice.toFixed(2)}
                               </span>
                             </div>
@@ -258,7 +258,7 @@ export default function TagsPage() {
                             {asset.tags.slice(0, 3).map((tag, idx) => (
                               <span
                                 key={idx}
-                                className="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700"
+                                className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700"
                               >
                                 {tag}
                               </span>
@@ -275,7 +275,7 @@ export default function TagsPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                         >
                           View Online →
                         </a>

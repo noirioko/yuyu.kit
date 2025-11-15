@@ -6,15 +6,15 @@ export default function LandingPage() {
   const { signInWithGoogle } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-violet-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-pink-50 to-blue-50">
       {/* Header */}
       <header className="container mx-auto px-6 py-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-lg flex items-center justify-center text-white font-bold">
+            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold">
               Y
             </div>
-            <span className="text-xl font-semibold text-gray-800">YuyuAsset</span>
+            <span className="text-xl font-semibold text-gray-800">MyPebbles</span>
           </div>
         </div>
       </header>
@@ -23,18 +23,18 @@ export default function LandingPage() {
       <main className="container mx-auto px-6 py-20">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Never Miss a Sale on
-            <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent"> Digital Assets</span>
+            Your Digital Asset Library
+            <span className="bg-gradient-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent"> Made Easy</span>
           </h1>
 
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
-            Track prices on 3D models, brushes, and asset packs. Get alerts when prices drop.
-            Organize by project and creator. Built for digital artists who want to save money.
+            Organize and manage your ACON3D and CSP assets in one place.
+            Track wishlists, organize by project, and never lose track of what you've bought!
           </p>
 
           <button
             onClick={signInWithGoogle}
-            className="inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 border border-gray-200"
+            className="glitter-hover inline-flex items-center gap-3 px-8 py-4 bg-white text-gray-700 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all border border-gray-200"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -47,34 +47,34 @@ export default function LandingPage() {
 
           {/* Features */}
           <div className="grid md:grid-cols-3 gap-8 mt-20">
-            <div className="bg-white rounded-2xl p-8 shadow-md">
-              <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                <svg className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <div className="glitter-hover bg-white rounded-2xl p-8 shadow-md">
+              <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">Price Drop Alerts</h3>
-              <p className="text-gray-600">Get notified when your wishlist items go on sale. Never pay full price again.</p>
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Wishlist Tracking</h3>
+              <p className="text-gray-600">Keep track of assets you want to buy. Never forget what caught your eye!</p>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-md">
-              <div className="w-12 h-12 bg-violet-100 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                <svg className="w-6 h-6 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="glitter-hover bg-white rounded-2xl p-8 shadow-md">
+              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">Project Folders</h3>
-              <p className="text-gray-600">Organize assets by project. Keep your references tidy and accessible.</p>
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Project Organization</h3>
+              <p className="text-gray-600">Group assets by project. Keep everything organized and easy to find.</p>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-md">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4 mx-auto">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <div className="glitter-hover bg-white rounded-2xl p-8 shadow-md">
+              <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center mb-4 mx-auto">
+                <svg className="w-6 h-6 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">Creator Collections</h3>
-              <p className="text-gray-600">Track all assets from your favorite creators and stores in one place.</p>
+              <h3 className="text-xl font-semibold text-gray-800 mb-3">Tag Everything</h3>
+              <p className="text-gray-600">Tag assets by platform, creator, or custom categories for quick filtering.</p>
             </div>
           </div>
         </div>
