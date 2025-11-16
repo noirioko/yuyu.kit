@@ -11,13 +11,13 @@ interface EditCollectionModalProps {
   onClose: () => void;
 }
 
-export default function EditCollectionModal({ collection, onClose }: EditCollectionModalProps) {
+export default function EditCollectionModal({ collection: collectionData, onClose }: EditCollectionModalProps) {
   const { theme } = useTheme();
-  const [name, setName] = useState(collection.name);
-  const [description, setDescription] = useState(collection.description || '');
-  const [platform, setPlatform] = useState(collection.platform || '');
+  const [name, setName] = useState(collectionData.name);
+  const [description, setDescription] = useState(collectionData.description || '');
+  const [platform, setPlatform] = useState(collectionData.platform || '');
   const [customPlatform, setCustomPlatform] = useState('');
-  const [color, setColor] = useState(collection.color || '#cba2ea');
+  const [color, setColor] = useState(collectionData.color || '#cba2ea');
   const [loading, setLoading] = useState(false);
 
   const platforms = [
@@ -46,7 +46,7 @@ export default function EditCollectionModal({ collection, onClose }: EditCollect
     setLoading(true);
     try {
       const finalPlatform = platform === 'Other' ? customPlatform : platform;
-      await updateDoc(doc(db, 'collections', collection.id), {
+      await updateDoc(doc(db, 'collections', collectionData.id), {
         name,
         description,
         platform: finalPlatform,
@@ -66,8 +66,8 @@ export default function EditCollectionModal({ collection, onClose }: EditCollect
     if (!db) return;
 
     const confirmed = confirm(
-      `Are you sure you want to delete "${collection.name}"?\n\n` +
-      `This will not delete the ${collection.assetCount} asset(s) in this collection, ` +
+      `Are you sure you want to delete "${collectionData.name}"?\n\n` +
+      `This will not delete the ${collectionData.assetCount} asset(s) in this collection, ` +
       `but will remove them from the collection.`
     );
     if (!confirmed) return;
@@ -77,7 +77,7 @@ export default function EditCollectionModal({ collection, onClose }: EditCollect
       // Remove collection reference from all assets
       const assetsQuery = query(
         collection(db, 'assets'),
-        where('collectionId', '==', collection.id)
+        where('collectionId', '==', collectionData.id)
       );
       const assetsSnapshot = await getDocs(assetsQuery);
 
@@ -88,7 +88,7 @@ export default function EditCollectionModal({ collection, onClose }: EditCollect
       await batch.commit();
 
       // Delete the collection
-      await deleteDoc(doc(db, 'collections', collection.id));
+      await deleteDoc(doc(db, 'collections', collectionData.id));
 
       onClose();
     } catch (error: any) {
