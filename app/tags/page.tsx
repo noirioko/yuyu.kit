@@ -536,7 +536,7 @@ export default function TagsPage() {
                                   : `${asset.currency}${asset.currentPrice.toFixed(2)}`}
                               </span>
                             </div>
-                            {asset.lowestPrice > 0 && asset.currentPrice > asset.lowestPrice && !asset.isOnSale && asset.currency?.toLowerCase() !== 'free' && (
+                            {asset.lowestPrice && asset.lowestPrice > 0 && asset.currentPrice > asset.lowestPrice && !asset.isOnSale && asset.currency?.toLowerCase() !== 'free' && (
                               <span className={`text-xs mt-1 block ${
                                 theme === 'night' ? 'text-white/60' : 'text-gray-500'
                               }`}>
