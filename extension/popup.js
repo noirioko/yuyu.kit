@@ -1,6 +1,6 @@
 // MyPebbles Manager - Popup Script
 
-const YUYU_ASSET_URL = 'https://mypebbles.vercel.app'; // UPDATE THIS to your ACTUAL Vercel URL
+const YUYU_ASSET_URL = 'https://yuyu-kit.vercel.app';
 
 // Load settings and render popup
 async function init() {
