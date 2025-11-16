@@ -181,31 +181,33 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Screenshots - Side by Side */}
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="relative w-full h-[350px]">
+            {/* Screenshots */}
+            <div className="space-y-6">
+              <div className="relative w-full h-[400px] bg-white/10 rounded-xl p-4">
                 <Image
                   src="/images/ss-extension.png"
                   alt="Extension screenshot"
                   fill
-                  className="object-contain rounded-lg"
+                  className="object-contain rounded-lg p-4"
                 />
               </div>
-              <div className="relative w-full h-[350px]">
-                <Image
-                  src="/images/ss-app.png"
-                  alt="App dashboard screenshot"
-                  fill
-                  className="object-contain rounded-lg"
-                />
-              </div>
-              <div className="relative w-full h-[350px]">
-                <Image
-                  src="/images/ss-project.png"
-                  alt="Project organization screenshot"
-                  fill
-                  className="object-contain rounded-lg"
-                />
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="relative w-full h-[300px] bg-white/10 rounded-xl p-4">
+                  <Image
+                    src="/images/ss-app.png"
+                    alt="App dashboard screenshot"
+                    fill
+                    className="object-contain rounded-lg p-4"
+                  />
+                </div>
+                <div className="relative w-full h-[300px] bg-white/10 rounded-xl p-4">
+                  <Image
+                    src="/images/ss-project.png"
+                    alt="Project organization screenshot"
+                    fill
+                    className="object-contain rounded-lg p-4"
+                  />
+                </div>
               </div>
             </div>
           </div>
