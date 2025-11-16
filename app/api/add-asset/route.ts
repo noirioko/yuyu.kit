@@ -39,10 +39,10 @@ export async function POST(request: NextRequest) {
     }
 
     const now = Timestamp.now();
-    const priceValue = price ? parseFloat(price) : null;
+    const priceValue = price != null ? parseFloat(price) : null;
 
     // Parse original price
-    const originalPriceValue = originalPrice ? parseFloat(originalPrice) : null;
+    const originalPriceValue = originalPrice != null ? parseFloat(originalPrice) : null;
 
     // Auto-generate tags from platform and creator
     const autoTags: string[] = [];

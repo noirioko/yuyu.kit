@@ -1,6 +1,6 @@
 // MyPebbles Manager - Popup Script
 
-const YUYU_ASSET_URL = 'http://localhost:3000'; // Change to your production URL later
+const YUYU_ASSET_URL = 'https://mypebbles.vercel.app'; // UPDATE THIS to your ACTUAL Vercel URL
 
 // Load settings and render popup
 async function init() {
@@ -272,12 +272,28 @@ async function fetchProjects() {
   }
 }
 
-function renderSettings() {
+async function renderSettings() {
+  const { quickAddEnabled } = await chrome.storage.sync.get(['quickAddEnabled']);
+  const isEnabled = quickAddEnabled !== false; // Default to true
+
   document.getElementById('content').innerHTML = `
     <div style="background: rgba(255,255,255,0.2); border-radius: 12px; padding: 20px; backdrop-filter: blur(10px);">
       <h2 style="font-size: 18px; margin-bottom: 16px;">Settings</h2>
 
-      <button class="btn" id="disconnectBtn" style="background: #ef4444;">
+      <div style="background: rgba(255,255,255,0.3); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Quick Add Button</div>
+            <div style="font-size: 11px; opacity: 0.8;">Show floating button on product pages</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="quickAddToggle" ${isEnabled ? 'checked' : ''}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn btn-secondary" id="disconnectBtn" style="color: #ef4444; font-weight: 600;">
         🔌 Disconnect Account
       </button>
 
@@ -286,6 +302,24 @@ function renderSettings() {
       </button>
     </div>
   `;
+
+  document.getElementById('quickAddToggle').addEventListener('change', async (e) => {
+    const enabled = e.target.checked;
+    await chrome.storage.sync.set({ quickAddEnabled: enabled });
+    console.log('✅ Quick Add button:', enabled ? 'enabled' : 'disabled');
+
+    // Send message to content scripts to toggle button
+    chrome.tabs.query({}, (tabs) => {
+      tabs.forEach(tab => {
+        chrome.tabs.sendMessage(tab.id, {
+          action: 'toggleQuickAdd',
+          enabled: enabled
+        }).catch(() => {
+          // Ignore errors for tabs without content script
+        });
+      });
+    });
+  });
 
   document.getElementById('disconnectBtn').addEventListener('click', async () => {
     if (confirm('Are you sure you want to disconnect your account?')) {

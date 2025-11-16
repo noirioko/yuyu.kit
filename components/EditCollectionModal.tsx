@@ -2,20 +2,22 @@
 
 import { useState } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, updateDoc, deleteDoc, Timestamp, collection, getDocs, query, where, writeBatch } from 'firebase/firestore';
+import { Collection as CollectionType } from '@/lib/types';
 import { useTheme } from '@/lib/ThemeContext';
 
-interface CollectionModalProps {
-  userId: string;
+interface EditCollectionModalProps {
+  collection: CollectionType;
   onClose: () => void;
 }
 
-export default function CollectionModal({ userId, onClose }: CollectionModalProps) {
+export default function EditCollectionModal({ collection, onClose }: EditCollectionModalProps) {
   const { theme } = useTheme();
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [platform, setPlatform] = useState('');
+  const [name, setName] = useState(collection.name);
+  const [description, setDescription] = useState(collection.description || '');
+  const [platform, setPlatform] = useState(collection.platform || '');
   const [customPlatform, setCustomPlatform] = useState('');
+  const [color, setColor] = useState(collection.color || '#cba2ea');
   const [loading, setLoading] = useState(false);
 
   const platforms = [
@@ -26,6 +28,17 @@ export default function CollectionModal({ userId, onClose }: CollectionModalProp
     'Other'
   ];
 
+  const colors = [
+    '#2868c6', // Cosmic Blue
+    '#cba2ea', // Stardust Purple
+    '#91d2f4', // Nebula Sky
+    '#3f3381', // Mystic Violet
+    '#10b981', // Green
+    '#f59e0b', // Amber
+    '#ef4444', // Red
+    '#ec4899', // Pink
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !db) return;
@@ -33,33 +46,71 @@ export default function CollectionModal({ userId, onClose }: CollectionModalProp
     setLoading(true);
     try {
       const finalPlatform = platform === 'Other' ? customPlatform : platform;
-      const now = Timestamp.now();
-      await addDoc(collection(db, 'collections'), {
-        userId,
+      await updateDoc(doc(db, 'collections', collection.id), {
         name,
         description,
         platform: finalPlatform,
-        assetCount: 0,
-        createdAt: now,
-        updatedAt: now,
+        color,
+        updatedAt: Timestamp.now(),
       });
 
-      setLoading(false);
       onClose();
-    } catch (error) {
-      console.error('Error creating collection:', error);
-      alert('Failed to create collection. Please try again.');
+    } catch (error: any) {
+      console.error('Error updating collection:', error);
+      alert(`Failed to update collection: ${error.message}`);
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!db) return;
+
+    const confirmed = confirm(
+      `Are you sure you want to delete "${collection.name}"?\n\n` +
+      `This will not delete the ${collection.assetCount} asset(s) in this collection, ` +
+      `but will remove them from the collection.`
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    try {
+      // Remove collection reference from all assets
+      const assetsQuery = query(
+        collection(db, 'assets'),
+        where('collectionId', '==', collection.id)
+      );
+      const assetsSnapshot = await getDocs(assetsQuery);
+
+      const batch = writeBatch(db);
+      assetsSnapshot.docs.forEach(assetDoc => {
+        batch.update(assetDoc.ref, { collectionId: null });
+      });
+      await batch.commit();
+
+      // Delete the collection
+      await deleteDoc(doc(db, 'collections', collection.id));
+
+      onClose();
+    } catch (error: any) {
+      console.error('Error deleting collection:', error);
+      alert(`Failed to delete collection: ${error.message}`);
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 modal-backdrop" onClick={onClose}>
-      <div className={`rounded-2xl max-w-md w-full transition-colors ${
-        theme === 'night'
-          ? 'bg-[#0a1c3d]/95 backdrop-blur-xl border border-white/20'
-          : 'bg-white'
-      }`} onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 modal-backdrop"
+      onClick={onClose}
+    >
+      <div
+        className={`rounded-2xl max-w-md w-full transition-colors ${
+          theme === 'night'
+            ? 'bg-[#0a1c3d]/95 backdrop-blur-xl border border-white/20'
+            : 'bg-white'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* X Close Button */}
         <button
           onClick={onClose}
@@ -76,8 +127,12 @@ export default function CollectionModal({ userId, onClose }: CollectionModalProp
         </button>
 
         <div className={`p-6 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-200'}`}>
-          <h2 className={`text-2xl font-bold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>New Collection</h2>
-          <p className={`text-sm mt-1 ${theme === 'night' ? 'text-white/60' : 'text-gray-500'}`}>Track assets by creator or store</p>
+          <h2 className={`text-2xl font-bold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>
+            Edit Collection
+          </h2>
+          <p className={`text-sm mt-1 ${theme === 'night' ? 'text-white/60' : 'text-gray-500'}`}>
+            Track assets by creator or store
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -155,25 +210,46 @@ export default function CollectionModal({ userId, onClose }: CollectionModalProp
             />
           </div>
 
+          <div>
+            <label className={`block text-sm font-medium mb-2 ${
+              theme === 'night' ? 'text-white' : 'text-gray-700'
+            }`}>
+              Folder Color
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {colors.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={`w-10 h-10 rounded-lg transition ${
+                    color === c ? 'ring-2 ring-offset-2 ring-[#2868c6]' : ''
+                  }`}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
+            </div>
+          </div>
+
           <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleDelete}
               className={`flex-1 py-3 border rounded-lg transition font-medium ${
                 theme === 'night'
-                  ? 'border-white/20 text-white/70 hover:bg-white/5'
-                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  ? 'border-red-400/50 text-red-400 hover:bg-red-400/10'
+                  : 'border-red-300 text-red-600 hover:bg-red-50'
               }`}
               disabled={loading}
             >
-              Cancel
+              Delete
             </button>
             <button
               type="submit"
               className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
               disabled={loading}
             >
-              {loading ? 'Creating...' : 'Create Collection'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

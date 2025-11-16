@@ -61,6 +61,7 @@ export interface Collection {
   name: string; // Creator name or store name
   description?: string;
   platform?: string;
+  color?: string;
   assetCount: number;
   createdAt: Date;
   updatedAt: Date;

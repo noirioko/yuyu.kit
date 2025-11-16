@@ -8,19 +8,45 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { Asset, Project, Collection as CollectionType } from '@/lib/types';
 
-export default function AboutPage() {
+interface PlatformStats {
+  platform: string;
+  wishlistCount: number;
+  boughtCount: number;
+  totalSpent: number;
+  currency: string;
+}
+
+export default function OverviewPage() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [collections, setCollections] = useState<CollectionType[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
+  // Generate stars for galaxy background
+  const stars = useMemo(() => {
+    return Array.from({ length: 30 }, (_, i) => ({
+      id: i,
+      width: Math.random() * 2 + 1,
+      height: Math.random() * 2 + 1,
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      opacity: Math.random() * 0.7 + 0.3,
+      animationDuration: Math.random() * 3 + 2,
+      animationDelay: Math.random() * 2,
+    }));
+  }, []);
+
   // Fetch assets
   useEffect(() => {
-    if (!user || !db) return;
+    if (!user || !db) {
+      router.push('/');
+      return;
+    }
 
     const q = query(collection(db, 'assets'), where('userId', '==', user.uid));
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -29,10 +55,11 @@ export default function AboutPage() {
         ...doc.data()
       } as Asset));
       setAssets(assetData);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user]);
+  }, [user, router]);
 
   // Fetch projects
   useEffect(() => {
@@ -130,22 +157,50 @@ export default function AboutPage() {
     }
   };
 
-  // Generate stars for galaxy background
-  const stars = useMemo(() => {
-    return Array.from({ length: 30 }, (_, i) => ({
-      id: i,
-      width: Math.random() * 2 + 1,
-      height: Math.random() * 2 + 1,
-      top: Math.random() * 100,
-      left: Math.random() * 100,
-      opacity: Math.random() * 0.7 + 0.3,
-      animationDuration: Math.random() * 3 + 2,
-      animationDelay: Math.random() * 2,
-    }));
-  }, []);
+  // Calculate platform statistics
+  const platformStats = useMemo(() => {
+    const stats = new Map<string, PlatformStats>();
+
+    assets.forEach(asset => {
+      const platform = asset.platform || 'Other';
+
+      if (!stats.has(platform)) {
+        stats.set(platform, {
+          platform,
+          wishlistCount: 0,
+          boughtCount: 0,
+          totalSpent: 0,
+          currency: asset.currency || '$'
+        });
+      }
+
+      const stat = stats.get(platform)!;
+
+      if (asset.status === 'wishlist') {
+        stat.wishlistCount++;
+      } else if (asset.status === 'bought') {
+        stat.boughtCount++;
+        stat.totalSpent += asset.currentPrice || 0;
+      }
+    });
+
+    return Array.from(stats.values()).sort((a, b) =>
+      (b.wishlistCount + b.boughtCount) - (a.wishlistCount + a.boughtCount)
+    );
+  }, [assets]);
+
+  // Calculate totals
+  const totals = useMemo(() => {
+    const wishlistCount = assets.filter(a => a.status === 'wishlist').length;
+    const boughtCount = assets.filter(a => a.status === 'bought').length;
+    const totalSpent = assets
+      .filter(a => a.status === 'bought')
+      .reduce((sum, a) => sum + (a.currentPrice || 0), 0);
+
+    return { wishlistCount, boughtCount, totalSpent };
+  }, [assets]);
 
   if (!user) {
-    router.push('/');
     return null;
   }
 
@@ -199,7 +254,7 @@ export default function AboutPage() {
               <span className={theme === 'night' ? 'text-white/40' : 'text-gray-400'}>/</span>
               <span className={`text-xl font-medium ${
                 theme === 'night' ? 'text-white/80' : 'text-gray-600'
-              }`}>About</span>
+              }`}>Overview</span>
             </div>
 
             <div className="flex items-center gap-4">
@@ -235,7 +290,7 @@ export default function AboutPage() {
 
                     <button
                       onClick={() => {
-                        router.push('/overview');
+                        router.push('/about');
                         setShowProfileMenu(false);
                       }}
                       className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
@@ -245,9 +300,9 @@ export default function AboutPage() {
                       }`}
                     >
                       <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span>Overview</span>
+                      <span>About</span>
                     </button>
 
                     <button
@@ -345,216 +400,208 @@ export default function AboutPage() {
           <div className="absolute inset-0 bg-white pointer-events-none" style={{ opacity: 0.5 }} />
         )}
 
-        <div className="max-w-3xl mx-auto relative z-10">
-          <div className={`rounded-2xl shadow-sm overflow-hidden transition-colors ${
-            theme === 'night'
-              ? 'bg-white/5 backdrop-blur-lg border border-white/10'
-              : 'bg-white'
-          }`}>
-            {/* Hero Image */}
-            <div className="relative w-full h-48 overflow-hidden">
-              <img
-                src="/images/pond.png"
-                alt="Peaceful pond"
-                className="w-full h-full object-cover"
-              />
+        <div className="max-w-5xl mx-auto relative z-10">
+          {/* Page Title */}
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-2">
+              <svg className="w-8 h-8 flex-shrink-0 text-[#cba2ea]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <h1 className={`text-4xl font-bold ${
+                theme === 'night' ? 'text-white' : 'text-gray-800'
+              }`}>Overview</h1>
             </div>
+            <p className={`text-sm ${
+              theme === 'night' ? 'text-white/60' : 'text-gray-500'
+            }`}>Track your asset collection and spending across all platforms</p>
+          </div>
 
-            <div className="p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <img
-                  src="/images/stone-stack.png"
-                  alt="Stone stack"
-                  className="w-10 h-10 object-contain"
-                />
-                <h1 className={`text-3xl font-bold ${
-                  theme === 'night' ? 'text-white' : 'text-gray-800'
-                }`}>About MyPebbles</h1>
-              </div>
-
-            <div className="prose prose-blue max-w-none">
-              <h2 className={`text-xl font-semibold mt-6 mb-3 ${
-                theme === 'night' ? 'text-white' : 'text-gray-800'
-              }`}>What is MyPebbles?</h2>
-              <p className={`mb-4 ${
-                theme === 'night' ? 'text-white/70' : 'text-gray-600'
-              }`}>
-                MyPebbles is your personal digital asset library for managing ACON3D, CSP, and other marketplace assets.
-                Keep track of what you want to buy, what you've already bought, and organize everything by project!
-              </p>
-
-              <h2 className={`text-xl font-semibold mt-8 mb-3 ${
-                theme === 'night' ? 'text-white' : 'text-gray-800'
-              }`}>Our Philosophy</h2>
-              <div className={`rounded-xl p-6 mb-6 ${
-                theme === 'night'
-                  ? 'bg-gradient-to-r from-[#2868c6]/20 to-[#cba2ea]/20 border border-white/10'
-                  : 'bg-gradient-to-r from-blue-50 to-pink-50 border border-gray-200'
-              }`}>
-                <p className={`text-base leading-relaxed ${
-                  theme === 'night' ? 'text-white/90' : 'text-gray-700'
+          {loading ? (
+            <div className={`text-center py-12 ${
+              theme === 'night' ? 'text-white/60' : 'text-gray-500'
+            }`}>
+              Loading statistics...
+            </div>
+          ) : (
+            <>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className={`rounded-2xl shadow-sm p-6 ${
+                  theme === 'night'
+                    ? 'bg-white/5 backdrop-blur-lg border border-white/10'
+                    : 'bg-white'
                 }`}>
-                  Assets are like pebbles — collect enough and you can build something amazing. But scattered pebbles? Just a mess.
-                </p>
-                <p className={`text-base leading-relaxed mt-3 ${
-                  theme === 'night' ? 'text-white/90' : 'text-gray-700'
-                }`}>
-                  MyPebbles gives your collection structure, so you can stop hoarding and start creating.
-                </p>
-
-                {/* Castle */}
-                <div className="text-center mt-6">
-                  <h3 className={`text-2xl md:text-3xl font-bold mb-4 ${
-                    theme === 'night'
-                      ? 'bg-gradient-to-r from-[#91d2f4] to-[#cba2ea] bg-clip-text text-transparent'
-                      : 'bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent'
-                  }`}>
-                    Go build that castle!
-                  </h3>
-                  <div className="flex justify-center">
-                    <img
-                      src="/images/castle.png"
-                      alt="Build your castle"
-                      className="w-40 h-40 object-contain drop-shadow-lg"
-                    />
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-lg bg-[#91d2f4]/20">
+                      <svg className="w-6 h-6 text-[#91d2f4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                      </svg>
+                    </div>
+                    <h3 className={`text-lg font-semibold ${
+                      theme === 'night' ? 'text-white' : 'text-gray-800'
+                    }`}>Wishlist</h3>
                   </div>
+                  <p className={`text-4xl font-bold ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>{totals.wishlistCount}</p>
+                  <p className={`text-sm mt-1 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Assets you want to buy</p>
+                </div>
+
+                <div className={`rounded-2xl shadow-sm p-6 ${
+                  theme === 'night'
+                    ? 'bg-white/5 backdrop-blur-lg border border-white/10'
+                    : 'bg-white'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-lg bg-[#2868c6]/20">
+                      <svg className="w-6 h-6 text-[#2868c6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <h3 className={`text-lg font-semibold ${
+                      theme === 'night' ? 'text-white' : 'text-gray-800'
+                    }`}>Purchased</h3>
+                  </div>
+                  <p className={`text-4xl font-bold ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>{totals.boughtCount}</p>
+                  <p className={`text-sm mt-1 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Assets you own</p>
+                </div>
+
+                <div className={`rounded-2xl shadow-sm p-6 ${
+                  theme === 'night'
+                    ? 'bg-white/5 backdrop-blur-lg border border-white/10'
+                    : 'bg-white'
+                }`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 rounded-lg bg-[#cba2ea]/20">
+                      <svg className="w-6 h-6 text-[#cba2ea]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className={`text-lg font-semibold ${
+                      theme === 'night' ? 'text-white' : 'text-gray-800'
+                    }`}>Total Spent</h3>
+                  </div>
+                  <p className="text-4xl font-bold text-[#cba2ea]">
+                    ${totals.totalSpent.toFixed(2)}
+                  </p>
+                  <p className={`text-sm mt-1 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Across all platforms</p>
                 </div>
               </div>
 
-              <div className={`border-l-4 p-4 mb-6 ${
+              {/* Platform Breakdown */}
+              <div className={`rounded-2xl shadow-sm overflow-hidden ${
                 theme === 'night'
-                  ? 'bg-[#91d2f4]/20 border-[#91d2f4]'
-                  : 'bg-gradient-to-r from-blue-50 to-pink-50 border-blue-500'
+                  ? 'bg-white/5 backdrop-blur-lg border border-white/10'
+                  : 'bg-white'
               }`}>
-                <p className={`text-sm ${
-                  theme === 'night' ? 'text-white/80' : 'text-gray-700'
+                <div className={`p-6 border-b ${
+                  theme === 'night' ? 'border-white/10' : 'border-gray-200'
                 }`}>
-                  <strong>Focus on Organization:</strong> MyPebbles is an asset manager, not a price tracker.
-                  Store asset information, organize by project, and never lose track of your collection!
-                </p>
+                  <h2 className={`text-2xl font-bold ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>Platform Breakdown</h2>
+                  <p className={`text-sm mt-1 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Detailed statistics for each platform</p>
+                </div>
+
+                {platformStats.length === 0 ? (
+                  <div className={`p-12 text-center ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>
+                    <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <p>No assets tracked yet</p>
+                    <p className="text-sm mt-2">Start adding assets to see your statistics!</p>
+                  </div>
+                ) : (
+                  <div className={theme === 'night' ? 'divide-y divide-white/10' : 'divide-y divide-gray-200'}>
+                    {platformStats.map((stat) => (
+                      <div key={stat.platform} className={`p-6 transition ${
+                        theme === 'night' ? '' : 'hover:bg-gray-50'
+                      }`}>
+                        <div className="flex items-start justify-between mb-4">
+                          <div>
+                            <h3 className={`text-xl font-bold ${
+                              theme === 'night' ? 'text-white' : 'text-gray-800'
+                            }`}>{stat.platform}</h3>
+                            <p className={`text-sm mt-1 ${
+                              theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                            }`}>
+                              {stat.wishlistCount + stat.boughtCount} total assets
+                            </p>
+                          </div>
+                          <div className={`px-4 py-2 rounded-lg ${
+                            theme === 'night'
+                              ? 'bg-[#cba2ea]/20'
+                              : 'bg-[#cba2ea]/10'
+                          }`}>
+                            <p className={`text-sm ${
+                              theme === 'night' ? 'text-white/60' : 'text-gray-600'
+                            }`}>Spent</p>
+                            <p className="text-2xl font-bold text-[#cba2ea]">
+                              {stat.totalSpent === 0
+                                ? 'FREE'
+                                : stat.currency === 'Gold' || stat.currency === 'Clippy'
+                                ? `${stat.totalSpent.toFixed(0)} ${stat.currency.toUpperCase()}`
+                                : `${stat.currency}${stat.totalSpent.toFixed(2)}`}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className={`p-4 rounded-lg border ${
+                            theme === 'night'
+                              ? 'border-white/10 bg-white/5'
+                              : 'border-gray-200 bg-gray-50'
+                          }`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-[#91d2f4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                              </svg>
+                              <p className={`text-xs ${
+                                theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                              }`}>Wishlist</p>
+                            </div>
+                            <p className={`text-3xl font-bold ${
+                              theme === 'night' ? 'text-white' : 'text-gray-800'
+                            }`}>{stat.wishlistCount}</p>
+                          </div>
+
+                          <div className={`p-4 rounded-lg border ${
+                            theme === 'night'
+                              ? 'border-white/10 bg-white/5'
+                              : 'border-gray-200 bg-gray-50'
+                          }`}>
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-[#2868c6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <p className={`text-xs ${
+                                theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                              }`}>Purchased</p>
+                            </div>
+                            <p className={`text-3xl font-bold ${
+                              theme === 'night' ? 'text-white' : 'text-gray-800'
+                            }`}>{stat.boughtCount}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              <h2 className={`text-xl font-semibold mt-8 mb-3 ${
-                theme === 'night' ? 'text-white' : 'text-gray-800'
-              }`}>Auto-Fill Accuracy</h2>
-              <p className={`mb-4 ${
-                theme === 'night' ? 'text-white/70' : 'text-gray-600'
-              }`}>
-                The browser extension tries its best to automatically extract product information, but it's
-                not perfect! Please always double-check:
-              </p>
-
-              <div className={`overflow-hidden rounded-lg border mb-4 ${
-                theme === 'night' ? 'border-white/10' : 'border-gray-200'
-              }`}>
-                <table className="w-full">
-                  <tbody className={theme === 'night' ? 'text-white/70' : 'text-gray-600'}>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#91d2f4]/10' : 'bg-[#91d2f4]/5'
-                      }`}>Creator/Brand name</td>
-                      <td className="px-4 py-3">Sometimes sale timers or discount text gets detected</td>
-                    </tr>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#91d2f4]/10' : 'bg-[#91d2f4]/5'
-                      }`}>Price</td>
-                      <td className="px-4 py-3">Make sure original and sale prices are correct</td>
-                    </tr>
-                    <tr>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#91d2f4]/10' : 'bg-[#91d2f4]/5'
-                      }`}>Product title</td>
-                      <td className="px-4 py-3">Verify it matches the actual product</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <h2 className={`text-xl font-semibold mt-8 mb-3 ${
-                theme === 'night' ? 'text-white' : 'text-gray-800'
-              }`}>What Can You Do?</h2>
-              <div className={`overflow-hidden rounded-lg border mb-4 ${
-                theme === 'night' ? 'border-white/10' : 'border-gray-200'
-              }`}>
-                <table className="w-full">
-                  <tbody className={theme === 'night' ? 'text-white/70' : 'text-gray-600'}>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#cba2ea]/10' : 'bg-[#cba2ea]/5'
-                      }`}>Wishlist</td>
-                      <td className="px-4 py-3">Save assets you want to buy with one click using the browser extension</td>
-                    </tr>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#cba2ea]/10' : 'bg-[#cba2ea]/5'
-                      }`}>Bought</td>
-                      <td className="px-4 py-3">Mark assets as purchased and keep track of what you own</td>
-                    </tr>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#cba2ea]/10' : 'bg-[#cba2ea]/5'
-                      }`}>In Use</td>
-                      <td className="px-4 py-3">Tag assets you're actively using in projects</td>
-                    </tr>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#cba2ea]/10' : 'bg-[#cba2ea]/5'
-                      }`}>Projects</td>
-                      <td className="px-4 py-3">Create project folders and assign assets to them</td>
-                    </tr>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#cba2ea]/10' : 'bg-[#cba2ea]/5'
-                      }`}>Collections</td>
-                      <td className="px-4 py-3">Group assets by creator, style, or any category you want</td>
-                    </tr>
-                    <tr className={theme === 'night' ? 'border-b border-white/10' : 'border-b border-gray-200'}>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#cba2ea]/10' : 'bg-[#cba2ea]/5'
-                      }`}>Tags</td>
-                      <td className="px-4 py-3">Add custom tags and browse by platform, creator, or your own categories</td>
-                    </tr>
-                    <tr>
-                      <td className={`px-4 py-3 font-semibold ${
-                        theme === 'night' ? 'bg-[#cba2ea]/10' : 'bg-[#cba2ea]/5'
-                      }`}>Save Info</td>
-                      <td className="px-4 py-3">Store prices, thumbnails, creator names, and URLs automatically</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <h2 className={`text-xl font-semibold mt-8 mb-3 ${
-                theme === 'night' ? 'text-white' : 'text-gray-800'
-              }`}>Privacy & Data</h2>
-              <p className={`mb-4 ${
-                theme === 'night' ? 'text-white/70' : 'text-gray-600'
-              }`}>
-                All your data is stored in Firebase and is only accessible to you via your Google account.
-                MyPebbles doesn't share your data with anyone or use it for any purpose other than displaying
-                your own asset collection to you.
-              </p>
-
-              <div className={`rounded-xl p-6 mt-8 ${
-                theme === 'night'
-                  ? 'bg-gradient-to-r from-[#2868c6]/20 to-[#cba2ea]/20'
-                  : 'bg-gradient-to-r from-blue-50 to-pink-50'
-              }`}>
-                <p className={`text-center ${
-                  theme === 'night' ? 'text-white' : 'text-gray-700'
-                }`}>
-                  Made by YuyuKit
-                </p>
-                <p className={`text-center text-sm mt-2 ${
-                  theme === 'night' ? 'text-white/60' : 'text-gray-500'
-                }`}>
-                  © melty haeon 2025
-                </p>
-              </div>
-            </div>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
     </div>

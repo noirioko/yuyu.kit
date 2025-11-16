@@ -9,7 +9,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-pink-50">
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#91d2f4]/10 to-[#cba2ea]/10">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );

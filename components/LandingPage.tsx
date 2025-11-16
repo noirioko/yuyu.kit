@@ -9,9 +9,9 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
       {/* Gradient circles in background */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-blue-200 to-pink-200 rounded-full blur-3xl opacity-30 -translate-y-32 translate-x-32"></div>
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-pink-200 to-blue-200 rounded-full blur-3xl opacity-30 translate-y-32 -translate-x-32"></div>
-      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-blue-100 to-pink-100 rounded-full blur-2xl opacity-20"></div>
+      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#91d2f4]/40 to-[#cba2ea]/40 rounded-full blur-3xl opacity-30 -translate-y-32 translate-x-32"></div>
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-[#cba2ea]/40 to-[#91d2f4]/40 rounded-full blur-3xl opacity-30 translate-y-32 -translate-x-32"></div>
+      <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20 rounded-full blur-2xl opacity-20"></div>
 
       {/* Header */}
       <header className="container mx-auto px-6 py-6 relative z-10">
@@ -25,25 +25,34 @@ export default function LandingPage() {
                 className="object-contain"
               />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent">MyPebbles</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">MyPebbles</span>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <main className="container mx-auto px-6 py-12 md:py-20 relative z-10">
-        <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto">
+      <main className="container mx-auto px-6 py-8 md:py-12 relative z-10">
+        <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto relative">
+          {/* Garden Background for Hero Section */}
+          <div
+            className="absolute inset-0 -mx-12 -my-8 bg-cover bg-center bg-no-repeat rounded-3xl -z-10"
+            style={{
+              backgroundImage: 'url(/images/landingpage-garden.jpg)',
+              opacity: 0.5
+            }}
+          />
+          <div className="absolute inset-0 -mx-12 -my-8 bg-white/30 rounded-3xl -z-10" />
           {/* Left side - Text content */}
           <div className="space-y-6">
-            <div className="inline-block px-4 py-2 bg-gradient-to-r from-blue-100 to-pink-100 rounded-full">
-              <span className="text-sm font-semibold bg-gradient-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent">
+            <div className="inline-block px-4 py-2 bg-gradient-to-r from-[#91d2f4]/20 to-[#cba2ea]/20 rounded-full">
+              <span className="text-sm font-semibold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">
                 ACON3D & CSP Asset Manager
               </span>
             </div>
 
             <h1 className="text-5xl md:text-6xl font-bold text-gray-900 leading-tight">
               Your Digital Asset Library
-              <span className="bg-gradient-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent"> Made Easy</span>
+              <span className="bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent"> Made Easy</span>
             </h1>
 
             <p className="text-xl text-gray-600 leading-relaxed">
@@ -54,7 +63,7 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <button
                 onClick={signInWithGoogle}
-                className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-pink-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+                className="glitter-hover inline-flex items-center justify-center gap-3 px-8 py-4 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
               >
                 <svg className="w-6 h-6" viewBox="0 0 24 24">
                   <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -74,17 +83,17 @@ export default function LandingPage() {
             </div>
 
             {/* Stats */}
-            <div className="flex gap-8 pt-8 border-t border-gray-200">
+            <div className="flex gap-16 pt-8 border-t border-gray-200">
               <div>
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent">Free</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">Free</div>
                 <div className="text-sm text-gray-500">No credit card</div>
               </div>
               <div>
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent">Unlimited</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">Unlimited</div>
                 <div className="text-sm text-gray-500">Assets tracked</div>
               </div>
               <div>
-                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-pink-600 bg-clip-text text-transparent">Organized</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">Organized</div>
                 <div className="text-sm text-gray-500">By projects</div>
               </div>
             </div>
@@ -106,35 +115,137 @@ export default function LandingPage() {
 
         {/* Features */}
         <div className="grid md:grid-cols-3 gap-8 mt-32 max-w-6xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all">
-            <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl flex items-center justify-center mb-6">
-              <svg className="w-7 h-7 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-              </svg>
+          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all text-center">
+            <div className="w-32 h-32 flex items-center justify-center mb-6 mx-auto">
+              <Image
+                src="/images/rockandfrog.png"
+                alt="Wishlist"
+                width={128}
+                height={128}
+                className="object-contain"
+              />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">Wishlist Tracking</h3>
             <p className="text-gray-600 leading-relaxed">Keep track of assets you want to buy. Never forget what caught your eye!</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all">
-            <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-2xl flex items-center justify-center mb-6">
-              <svg className="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
+          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all text-center">
+            <div className="w-32 h-32 flex items-center justify-center mb-6 mx-auto">
+              <Image
+                src="/images/frogparent.png"
+                alt="Projects"
+                width={128}
+                height={128}
+                className="object-contain"
+              />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">Project Organization</h3>
             <p className="text-gray-600 leading-relaxed">Group assets by project. Keep everything organized and easy to find.</p>
           </div>
 
-          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all">
-            <div className="w-14 h-14 bg-gradient-to-br from-pink-100 to-pink-200 rounded-2xl flex items-center justify-center mb-6">
-              <svg className="w-7 h-7 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-              </svg>
+          <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-lg hover:scale-105 transition-all text-center">
+            <div className="w-32 h-32 flex items-center justify-center mb-6 mx-auto">
+              <Image
+                src="/images/frogtags.png"
+                alt="Tags"
+                width={128}
+                height={128}
+                className="object-contain"
+              />
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">Tag Everything</h3>
             <p className="text-gray-600 leading-relaxed">Tag assets by platform, creator, or custom categories for quick filtering.</p>
           </div>
+        </div>
+
+        {/* How it Works */}
+        <div className="mt-32 max-w-6xl mx-auto">
+          <div className="bg-gradient-to-r from-blue-50 to-pink-50 rounded-3xl p-12 border border-gray-200">
+            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">
+              How it works
+            </h2>
+
+            {/* Steps */}
+            <div className="space-y-6 mb-12">
+              <p className="text-lg text-gray-700 leading-relaxed">
+                <span className="font-semibold text-[#2868c6]">1. Download the extension:</span> Install our Chrome extension from the Chrome Web Store.
+              </p>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                <span className="font-semibold text-[#2868c6]">2. Browse your favorite sites:</span> Visit ACON3D or Clip Studio Paint Assets.
+              </p>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                <span className="font-semibold text-[#2868c6]">3. Save with one click:</span> Click the extension icon and instantly save assets to your library!
+              </p>
+              <p className="text-lg text-gray-700 leading-relaxed">
+                <span className="font-semibold text-[#2868c6]">4. Organize your collection:</span> Create projects, add tags, and manage everything in one beautiful dashboard. Track what you've bought, what's on your wishlist, and what you're currently using!
+              </p>
+            </div>
+
+            {/* Screenshots - Side by Side */}
+            <div className="grid md:grid-cols-3 gap-8">
+              <div className="relative w-full h-[350px]">
+                <Image
+                  src="/images/ss-extension.png"
+                  alt="Extension screenshot"
+                  fill
+                  className="object-contain rounded-lg"
+                />
+              </div>
+              <div className="relative w-full h-[350px]">
+                <Image
+                  src="/images/ss-app.png"
+                  alt="App dashboard screenshot"
+                  fill
+                  className="object-contain rounded-lg"
+                />
+              </div>
+              <div className="relative w-full h-[350px]">
+                <Image
+                  src="/images/ss-project.png"
+                  alt="Project organization screenshot"
+                  fill
+                  className="object-contain rounded-lg"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Call to Action - Castle */}
+        <div className="mt-32 max-w-4xl mx-auto">
+          <div className="bg-gradient-to-r from-blue-50 to-pink-50 rounded-3xl p-12 border border-gray-200">
+            {/* Philosophy */}
+            <div className="text-center mb-8">
+              <p className="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto">
+                Assets are like pebbles — collect enough and you can build something amazing. But scattered pebbles? Just a mess.
+              </p>
+              <p className="text-lg text-gray-700 leading-relaxed mt-3 max-w-2xl mx-auto">
+                MyPebbles gives your collection structure, so you can stop hoarding and start creating.
+              </p>
+            </div>
+
+            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent mb-8 text-center">
+              Go build that castle!
+            </h2>
+            <div className="relative w-48 h-48 mx-auto">
+              <Image
+                src="/images/castle.png"
+                alt="Build your castle"
+                fill
+                className="object-contain drop-shadow-lg"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-16 pb-8">
+          <p className="text-center text-gray-700">
+            Made by YuyuKit
+          </p>
+          <p className="text-center text-sm mt-2 text-gray-500">
+            © melty haeon 2025
+          </p>
         </div>
       </main>
     </div>

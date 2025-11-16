@@ -16,72 +16,54 @@ function extractAssetData() {
     creator: ''
   };
 
-  // Detect platform
+  // Detect platform (ACON3D and CSP only)
   const hostname = window.location.hostname;
   if (hostname.includes('acon3d')) {
     data.platform = 'ACON3D';
   } else if (hostname.includes('clip-studio')) {
-    data.platform = 'Clip Studio Paint';
-  } else if (hostname.includes('gumroad')) {
-    data.platform = 'Gumroad';
-  } else if (hostname.includes('vgen')) {
-    data.platform = 'VGEN';
-  } else if (hostname.includes('artstation')) {
-    data.platform = 'ArtStation Marketplace';
-  } else if (hostname.includes('blendermarket')) {
-    data.platform = 'Blender Market';
+    data.platform = 'CSP Asset';
   }
 
   console.log('🏷️ Platform detected:', data.platform);
 
   // CSP-SPECIFIC EXTRACTION (do this FIRST before generic methods)
-  if (data.platform === 'Clip Studio Paint') {
+  if (data.platform === 'CSP Asset') {
     console.log('🎨 Using CSP-specific extraction...');
 
-    // CSP Title: .materialHeaderTitle
-    const cspTitle = document.querySelector('.materialHeaderTitle');
-    if (cspTitle) {
-      data.title = cspTitle.textContent.trim();
-      console.log('✅ Found CSP title from .materialHeaderTitle:', data.title);
+    // CSP Title: h1.materialHeaderTitle span[data-translated-text]
+    const cspTitleSpan = document.querySelector('.materialHeaderTitle span[data-translated-text]');
+    if (cspTitleSpan) {
+      data.title = cspTitleSpan.textContent.trim();
+      console.log('✅ Found CSP title from .materialHeaderTitle span:', data.title);
     }
 
-    // CSP Author: .author_title or [class*="author_title"]
-    const cspAuthor = document.querySelector('.author_title, [class*="author_title"]');
+    // CSP Author: span.authorTop__name
+    const cspAuthor = document.querySelector('.authorTop__name');
     if (cspAuthor) {
       const authorText = cspAuthor.textContent?.trim();
-      if (authorText && authorText.length >= 2 && authorText.length <= 30) {
+      if (authorText && authorText.length >= 2 && authorText.length <= 50) {
         data.creator = authorText;
-        console.log('✅ Found CSP author from .author_title:', data.creator);
+        console.log('✅ Found CSP author from .authorTop__name:', data.creator);
       }
     }
 
-    // CSP Price: Look for price-specific elements first
-    // Check for FREE indicator in specific elements
-    const priceArea = document.querySelector('[class*="price"]');
-    if (priceArea) {
-      const priceText = priceArea.textContent || '';
-      console.log('🔍 CSP price area text:', priceText);
+    // CSP Price: Check li.price__free first, then ul.price for CLIPPY/GOLD
+    const priceFreeElement = document.querySelector('li.price__free');
+    if (priceFreeElement) {
+      data.price = 0;
+      data.currency = 'Free';
+      console.log('✅ CSP FREE item detected from li.price__free');
+    } else {
+      // Check for CLIPPY/GOLD in ul.price
+      const priceContainer = document.querySelector('ul.price');
+      if (priceContainer) {
+        const priceText = priceContainer.textContent || '';
+        console.log('🔍 CSP price text:', priceText);
 
-      // Check if it says FREE or 無料
-      if (/FREE|無料/i.test(priceText)) {
-        data.price = 0;
-        data.currency = 'Free';
-        console.log('✅ CSP FREE item detected from price area');
-      }
-      // Extract CLIPPY or GOLD price
-      else {
         const clippyMatch = priceText.match(/(\d+)\s*CLIPPY/i);
         const goldMatch = priceText.match(/(\d+)\s*GOLD/i);
 
-        if (clippyMatch && parseInt(clippyMatch[1]) === 0) {
-          data.price = 0;
-          data.currency = 'Free';
-          console.log('✅ CSP FREE item detected (0 CLIPPY)');
-        } else if (goldMatch && parseInt(goldMatch[1]) === 0) {
-          data.price = 0;
-          data.currency = 'Free';
-          console.log('✅ CSP FREE item detected (0 GOLD)');
-        } else if (clippyMatch) {
+        if (clippyMatch) {
           data.price = parseInt(clippyMatch[1]);
           data.currency = 'Clippy';
           console.log('✅ CSP CLIPPY price:', data.price);
@@ -156,7 +138,7 @@ function extractAssetData() {
   let priceFound = false;
 
   // CSP-specific: Check if we already extracted price in CSP-specific section
-  if (data.platform === 'Clip Studio Paint' && data.price !== null) {
+  if (data.platform === 'CSP Asset' && data.price !== null) {
     priceFound = true;
     console.log('✅ CSP price already extracted:', data.price, data.currency);
   }
@@ -673,46 +655,26 @@ function isAssetPage() {
     return isDetailPage;
   }
 
-  // Gumroad: Product pages are at /{username}/{product-slug}
-  if (hostname.includes('gumroad')) {
-    const isProductPage = pathname.split('/').filter(p => p).length >= 2;
-    console.log('✅ Gumroad product page:', isProductPage);
-    return isProductPage;
-  }
-
-  // VGEN: Commission pages are /username/product/id
-  if (hostname.includes('vgen')) {
-    const isProductPage = pathname.includes('/product/');
-    console.log('✅ VGEN product page:', isProductPage);
-    return isProductPage;
-  }
-
-  // ArtStation Marketplace: /marketplace/p/{product-slug}
-  if (hostname.includes('artstation')) {
-    const isProductPage = pathname.includes('/marketplace/p/');
-    console.log('✅ ArtStation product page:', isProductPage);
-    return isProductPage;
-  }
-
-  // Blender Market: /products/{product-slug}
-  if (hostname.includes('blendermarket')) {
-    const isProductPage = pathname.includes('/products/');
-    console.log('✅ Blender Market product page:', isProductPage);
-    return isProductPage;
-  }
-
-  // Unknown platform - show button
-  console.log('⚠️ Unknown platform, showing button anyway');
-  return true;
+  // Only ACON3D and CSP are supported - don't show button on other sites
+  console.log('⚠️ Unsupported platform - MyPebbles only supports ACON3D and CSP Asset');
+  return false;
 }
 
 // Create and inject the floating button
-function createFloatingButton() {
+async function createFloatingButton() {
   // Check if we're on a valid asset page
   if (!isAssetPage()) {
     console.log('⏭️ Not an asset page, skipping button injection');
     return;
   }
+
+  // Check if Quick Add button is enabled
+  const { quickAddEnabled } = await chrome.storage.sync.get(['quickAddEnabled']);
+  if (quickAddEnabled === false) {
+    console.log('⏭️ Quick Add button is disabled, skipping button injection');
+    return;
+  }
+
   // Check if button already exists
   if (document.getElementById('mypebbles-btn')) return;
 
@@ -828,6 +790,23 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'extractData') {
     const data = extractAssetData();
     sendResponse(data);
+    return true;
+  }
+
+  if (request.action === 'toggleQuickAdd') {
+    const button = document.getElementById('mypebbles-btn');
+    if (request.enabled) {
+      // Show button if it doesn't exist
+      if (!button && isAssetPage()) {
+        createFloatingButton();
+      }
+    } else {
+      // Hide button if it exists
+      if (button) {
+        button.remove();
+        console.log('✅ Quick Add button removed');
+      }
+    }
     return true;
   }
 });

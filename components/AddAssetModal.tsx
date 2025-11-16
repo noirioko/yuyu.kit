@@ -289,7 +289,7 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
                 onClick={() => setStatus('wishlist')}
                 className={`flex-1 py-2 rounded-lg border-2 transition ${
                   status === 'wishlist'
-                    ? 'border-purple-600 bg-purple-50 text-purple-700 font-medium'
+                    ? 'border-[#2868c6] bg-[#91d2f4]/20 text-[#2868c6] font-medium'
                     : 'border-gray-300 text-gray-600 hover:border-gray-400'
                 }`}
               >
@@ -300,7 +300,7 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
                 onClick={() => setStatus('bought')}
                 className={`flex-1 py-2 rounded-lg border-2 transition ${
                   status === 'bought'
-                    ? 'border-purple-600 bg-purple-50 text-purple-700 font-medium'
+                    ? 'border-[#2868c6] bg-[#91d2f4]/20 text-[#2868c6] font-medium'
                     : 'border-gray-300 text-gray-600 hover:border-gray-400'
                 }`}
               >
@@ -311,7 +311,7 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
                 onClick={() => setStatus('in-use')}
                 className={`flex-1 py-2 rounded-lg border-2 transition ${
                   status === 'in-use'
-                    ? 'border-purple-600 bg-purple-50 text-purple-700 font-medium'
+                    ? 'border-[#2868c6] bg-[#91d2f4]/20 text-[#2868c6] font-medium'
                     : 'border-gray-300 text-gray-600 hover:border-gray-400'
                 }`}
               >
@@ -331,7 +331,7 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
+              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
               disabled={loading}
             >
               {loading ? 'Adding...' : 'Add Asset'}

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "MyPebbles Asset Manager",
-  "version": "1.1.0",
-  "description": "One-click save assets from ACON3D, CSP, Gumroad, VGEN, and more to your MyPebbles library!",
+  "version": "1.0.0",
+  "description": "One-click save assets from ACON3D and Clip Studio Paint to your MyPebbles library!",
   "permissions": [
     "storage",
     "activeTab",
@@ -12,7 +12,6 @@
     "service_worker": "background.js"
   },
   "host_permissions": [
-    "http://localhost:3000/*",
     "https://*/*"
   ],
   "action": {
