@@ -114,7 +114,7 @@ export default function ViewAssetModal({ asset, onClose, onEdit, onDelete }: Vie
                     : `${asset.currency}${asset.currentPrice.toFixed(2)}`}
                 </span>
               </div>
-              {asset.lowestPrice > 0 && asset.currentPrice > asset.lowestPrice && !asset.isOnSale && (
+              {asset.lowestPrice && asset.lowestPrice > 0 && asset.currentPrice > asset.lowestPrice && !asset.isOnSale && (
                 <p className={`text-sm mt-2 ${theme === 'night' ? 'text-white/60' : 'text-gray-500'}`}>
                   💰 Lowest price seen: {asset.currency === 'Free'
                     ? 'FREE'
