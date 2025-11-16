@@ -8,6 +8,8 @@ import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { Asset, Project, Collection as CollectionType } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
 export default function AboutPage() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();

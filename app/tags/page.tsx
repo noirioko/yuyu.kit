@@ -10,6 +10,8 @@ import { useRouter } from 'next/navigation';
 import ViewAssetModal from '@/components/ViewAssetModal';
 import EditAssetModal from '@/components/EditAssetModal';
 
+export const dynamic = 'force-dynamic';
+
 export default function TagsPage() {
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
