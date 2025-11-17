@@ -2,9 +2,11 @@
 
 import { useAuth } from '@/lib/AuthContext';
 import Image from 'next/image';
+import { useState } from 'react';
 
 export default function LandingPage() {
   const { signInWithGoogle } = useAuth();
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   return (
     <div className="min-h-screen bg-white relative overflow-hidden">
@@ -182,33 +184,55 @@ export default function LandingPage() {
             </div>
 
             {/* Screenshots */}
-            <div className="space-y-6">
-              <div className="relative w-full h-[400px] bg-white/10 rounded-xl p-4">
+            <div className="grid md:grid-cols-3 gap-6">
+              <button
+                onClick={() => setLightboxImage('/images/ss-extension.png')}
+                className="relative w-full h-[280px] bg-white/30 rounded-xl p-4 hover:bg-white/50 transition-all cursor-pointer group overflow-hidden"
+              >
                 <Image
                   src="/images/ss-extension.png"
                   alt="Extension screenshot"
                   fill
-                  className="object-contain rounded-lg p-4"
+                  className="object-contain rounded-lg p-4 group-hover:scale-105 transition-transform"
                 />
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <div className="relative w-full h-[300px] bg-white/10 rounded-xl p-4">
-                  <Image
-                    src="/images/ss-app.png"
-                    alt="App dashboard screenshot"
-                    fill
-                    className="object-contain rounded-lg p-4"
-                  />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all rounded-xl">
+                  <span className="text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity font-semibold">
+                    Click to enlarge
+                  </span>
                 </div>
-                <div className="relative w-full h-[300px] bg-white/10 rounded-xl p-4">
-                  <Image
-                    src="/images/ss-project.png"
-                    alt="Project organization screenshot"
-                    fill
-                    className="object-contain rounded-lg p-4"
-                  />
+              </button>
+              <button
+                onClick={() => setLightboxImage('/images/ss-app.png')}
+                className="relative w-full h-[280px] bg-white/30 rounded-xl p-4 hover:bg-white/50 transition-all cursor-pointer group overflow-hidden"
+              >
+                <Image
+                  src="/images/ss-app.png"
+                  alt="App dashboard screenshot"
+                  fill
+                  className="object-contain rounded-lg p-4 group-hover:scale-105 transition-transform"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all rounded-xl">
+                  <span className="text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity font-semibold">
+                    Click to enlarge
+                  </span>
                 </div>
-              </div>
+              </button>
+              <button
+                onClick={() => setLightboxImage('/images/ss-project.png')}
+                className="relative w-full h-[280px] bg-white/30 rounded-xl p-4 hover:bg-white/50 transition-all cursor-pointer group overflow-hidden"
+              >
+                <Image
+                  src="/images/ss-project.png"
+                  alt="Project organization screenshot"
+                  fill
+                  className="object-contain rounded-lg p-4 group-hover:scale-105 transition-transform"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all rounded-xl">
+                  <span className="text-gray-700 opacity-0 group-hover:opacity-100 transition-opacity font-semibold">
+                    Click to enlarge
+                  </span>
+                </div>
+              </button>
             </div>
           </div>
         </div>
@@ -255,6 +279,34 @@ export default function LandingPage() {
           </p>
         </div>
       </main>
+
+      {/* Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 animate-fadeIn"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors z-10"
+            aria-label="Close"
+          >
+            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <div className="relative w-full max-w-6xl h-[90vh]">
+            <Image
+              src={lightboxImage}
+              alt="Screenshot enlarged"
+              fill
+              className="object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          <p className="absolute bottom-4 text-white/60 text-sm">Click anywhere to close</p>
+        </div>
+      )}
     </div>
   );
 }
