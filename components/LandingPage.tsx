@@ -248,6 +248,11 @@ export default function LandingPage() {
           <p className="text-center text-sm mt-2 text-gray-500">
             © melty haeon 2025
           </p>
+          <p className="text-center text-sm mt-3">
+            <a href="/privacy" className="text-gray-600 hover:text-[#2868c6] transition underline">
+              Privacy Policy
+            </a>
+          </p>
         </div>
       </main>
     </div>
