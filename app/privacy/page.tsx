@@ -395,7 +395,7 @@ export default function PrivacyPage() {
               <p className={`text-sm mb-8 ${
                 theme === 'night' ? 'text-white/60' : 'text-gray-500'
               }`}>
-                Last updated: January 2025
+                Last updated: November 17, 2025
               </p>
 
               <div className="prose prose-blue max-w-none">
