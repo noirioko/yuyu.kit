@@ -1,7 +1,7 @@
 // YuyuAsset Manager - Background Service Worker
 // This runs in the background and handles messages from content scripts
 
-const YUYU_ASSET_URL = 'http://localhost:3000'; // Change to production URL later
+const YUYU_ASSET_URL = 'https://yuyu-kit.vercel.app';
 
 // Listen for messages from content script (Quick Add button)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
