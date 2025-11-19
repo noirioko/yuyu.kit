@@ -38,19 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     // Check for redirect result when user returns from Google login
-    getRedirectResult(auth)
-      .then((result) => {
-        // User successfully signed in via redirect
-        if (result?.user) {
-          setUser(result.user);
-        }
-      })
-      .catch((error) => {
-        console.error('Error handling redirect result:', error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    getRedirectResult(auth).catch((error) => {
+      console.error('Error handling redirect result:', error);
+    });
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
