@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((result) => {
         // User successfully signed in via redirect
         if (result?.user) {
+          console.log('✅ Redirect sign-in successful:', result.user.email);
           setUser(result.user);
         }
       })
