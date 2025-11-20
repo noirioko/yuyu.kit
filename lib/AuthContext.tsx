@@ -5,6 +5,7 @@ import {
   User,
   GoogleAuthProvider,
   signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
   signOut as firebaseSignOut,
   onAuthStateChanged
@@ -90,11 +91,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
     const provider = new GoogleAuthProvider();
+
+    // Use popup for localhost, redirect for production
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
     try {
-      console.log('🚀 Starting Google sign-in with redirect...');
-      console.log('Auth domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
-      await signInWithRedirect(auth, provider);
-      console.log('✅ Redirect initiated');
+      if (isLocalhost) {
+        console.log('🚀 Starting Google sign-in with popup (localhost)...');
+        await signInWithPopup(auth, provider);
+        console.log('✅ Popup sign-in successful');
+      } else {
+        console.log('🚀 Starting Google sign-in with redirect (production)...');
+        console.log('Auth domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
+        await signInWithRedirect(auth, provider);
+        console.log('✅ Redirect initiated');
+      }
     } catch (error) {
       console.error('❌ Error signing in with Google:', error);
       throw error;
