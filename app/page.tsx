@@ -7,6 +7,8 @@ import LandingPage from '@/components/LandingPage';
 export default function Home() {
   const { user, loading } = useAuth();
 
+  console.log('🏠 Home page - Loading:', loading, 'User:', user?.email || 'none');
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#91d2f4]/10 to-[#cba2ea]/10">
@@ -15,5 +17,6 @@ export default function Home() {
     );
   }
 
+  console.log('🏠 Rendering:', user ? 'Dashboard' : 'LandingPage');
   return user ? <Dashboard /> : <LandingPage />;
 }
