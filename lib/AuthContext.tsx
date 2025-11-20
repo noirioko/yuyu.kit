@@ -37,20 +37,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Only run on client-side
+    if (typeof window === 'undefined') {
+      setLoading(false);
+      return;
+    }
+
     // Check for redirect result when user returns from Google login
     getRedirectResult(auth)
       .then((result) => {
         // User successfully signed in via redirect
         if (result?.user) {
           console.log('✅ Redirect sign-in successful:', result.user.email);
-          setUser(result.user);
         }
       })
       .catch((error) => {
         console.error('Error handling redirect result:', error);
-      })
-      .finally(() => {
-        setLoading(false);
       });
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
