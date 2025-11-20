@@ -43,24 +43,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    let mounted = true;
+
     // Check for redirect result when user returns from Google login
-    getRedirectResult(auth)
-      .then((result) => {
-        // User successfully signed in via redirect
+    const handleRedirect = async () => {
+      try {
+        console.log('🔍 Checking for redirect result...');
+        const result = await getRedirectResult(auth);
+
         if (result?.user) {
           console.log('✅ Redirect sign-in successful:', result.user.email);
+          if (mounted) {
+            setUser(result.user);
+          }
+        } else {
+          console.log('ℹ️ No redirect result (normal page load)');
         }
-      })
-      .catch((error) => {
-        console.error('Error handling redirect result:', error);
-      });
+      } catch (error) {
+        console.error('❌ Error handling redirect result:', error);
+      }
+    };
+
+    handleRedirect();
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
+      console.log('👤 Auth state changed:', user?.email || 'signed out');
+      if (mounted) {
+        setUser(user);
+        setLoading(false);
+      }
     });
 
-    return unsubscribe;
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
   }, []);
 
   const signInWithGoogle = async () => {
