@@ -49,18 +49,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleRedirect = async () => {
       try {
         console.log('🔍 Checking for redirect result...');
+        console.log('Current URL:', window.location.href);
         const result = await getRedirectResult(auth);
 
         if (result?.user) {
           console.log('✅ Redirect sign-in successful:', result.user.email);
+          console.log('User UID:', result.user.uid);
           if (mounted) {
             setUser(result.user);
           }
         } else {
           console.log('ℹ️ No redirect result (normal page load)');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('❌ Error handling redirect result:', error);
+        console.error('Error code:', error?.code);
+        console.error('Error message:', error?.message);
       }
     };
 
@@ -87,10 +91,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     const provider = new GoogleAuthProvider();
     try {
-      // Use redirect instead of popup to avoid popup blockers
+      console.log('🚀 Starting Google sign-in with redirect...');
+      console.log('Auth domain:', process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
       await signInWithRedirect(auth, provider);
+      console.log('✅ Redirect initiated');
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('❌ Error signing in with Google:', error);
       throw error;
     }
   };
