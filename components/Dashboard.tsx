@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from '@/lib/ThemeContext';
@@ -44,10 +45,14 @@ export default function Dashboard() {
   const [editingCollection, setEditingCollection] = useState<CollectionType | null>(null);
   const [deletingAssetId, setDeletingAssetId] = useState<string | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [profileMenuPosition, setProfileMenuPosition] = useState<{top: number, right: number} | null>(null);
   const [notifications, setNotifications] = useState<Array<{id: string, type: 'duplicate', assetId: string, assetTitle: string, url: string, timestamp: Date}>>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [notificationMenuPosition, setNotificationMenuPosition] = useState<{top: number, right: number} | null>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
   const [draggedAsset, setDraggedAsset] = useState<Asset | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<{type: 'project' | 'collection', id: string} | null>(null);
 
@@ -383,7 +388,17 @@ export default function Dashboard() {
               {/* Notifications */}
               <div className="relative">
                 <button
-                  onClick={() => setShowNotifications(!showNotifications)}
+                  ref={notificationButtonRef}
+                  onClick={() => {
+                    if (notificationButtonRef.current) {
+                      const rect = notificationButtonRef.current.getBoundingClientRect();
+                      setNotificationMenuPosition({
+                        top: rect.bottom + 8,
+                        right: window.innerWidth - rect.right
+                      });
+                    }
+                    setShowNotifications(!showNotifications);
+                  }}
                   className={`relative transition ${
                     theme === 'night'
                       ? 'text-white hover:text-[#91d2f4]'
@@ -401,14 +416,18 @@ export default function Dashboard() {
                   )}
                 </button>
 
-                {showNotifications && (
+                {showNotifications && notificationMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={notificationRef}
-                    className={`absolute right-0 mt-2 w-96 rounded-xl shadow-lg border py-2 z-[9999] max-h-96 overflow-y-auto notification-dropdown ${
+                    className={`fixed w-96 rounded-xl shadow-lg border py-2 z-[9999] max-h-96 overflow-y-auto notification-dropdown ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
                     }`}
+                    style={{
+                      top: `${notificationMenuPosition.top}px`,
+                      right: `${notificationMenuPosition.right}px`
+                    }}
                   >
                     <div className={`px-4 py-2 border-b flex items-center justify-between ${
                       theme === 'night' ? 'border-white/10' : 'border-gray-100'
@@ -477,14 +496,25 @@ export default function Dashboard() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
 
               {/* Profile Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                  ref={profileButtonRef}
+                  onClick={() => {
+                    if (profileButtonRef.current) {
+                      const rect = profileButtonRef.current.getBoundingClientRect();
+                      setProfileMenuPosition({
+                        top: rect.bottom + 8,
+                        right: window.innerWidth - rect.right
+                      });
+                    }
+                    setShowProfileMenu(!showProfileMenu);
+                  }}
                   className="flex items-center gap-2 hover:opacity-80 transition"
                 >
                   <img
@@ -497,14 +527,18 @@ export default function Dashboard() {
                   </svg>
                 </button>
 
-                {showProfileMenu && (
+                {showProfileMenu && profileMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={profileMenuRef}
-                    className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border py-2 z-[9999] ${
+                    className={`fixed w-56 rounded-xl shadow-lg border py-2 z-[9999] ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
                     }`}
+                    style={{
+                      top: `${profileMenuPosition.top}px`,
+                      right: `${profileMenuPosition.right}px`
+                    }}
                   >
                     <div className={`px-4 py-2 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}>
                       <p className={`text-sm font-semibold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>{user?.displayName}</p>
@@ -600,7 +634,8 @@ export default function Dashboard() {
                       </svg>
                       <span>Sign Out</span>
                     </button>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>
