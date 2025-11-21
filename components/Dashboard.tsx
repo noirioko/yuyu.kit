@@ -313,7 +313,7 @@ export default function Dashboard() {
         : 'bg-gray-50'
     }`}>
       {/* Header */}
-      <header className={`border-b transition-colors duration-300 relative z-[100] ${
+      <header className={`border-b transition-colors duration-300 sticky top-0 z-[500] ${
         theme === 'night'
           ? 'bg-gradient-to-r from-[#101c29] via-[#0a1c3d] via-[#131f5a] via-[#3f3381] to-[#2868c6] backdrop-blur-lg border-[#2868c6]/30'
           : 'bg-gradient-to-r from-[#91d2f4]/30 via-[#cba2ea]/20 to-[#91d2f4]/30 border-gray-200'
