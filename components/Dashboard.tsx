@@ -419,14 +419,15 @@ export default function Dashboard() {
                 {showNotifications && notificationMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={notificationRef}
-                    className={`fixed w-96 rounded-xl shadow-lg border py-2 z-[9999] max-h-96 overflow-y-auto notification-dropdown ${
+                    className={`fixed w-96 rounded-xl shadow-lg border py-2 max-h-96 overflow-y-auto notification-dropdown ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
                     }`}
                     style={{
                       top: `${notificationMenuPosition.top}px`,
-                      right: `${notificationMenuPosition.right}px`
+                      right: `${notificationMenuPosition.right}px`,
+                      zIndex: 99999
                     }}
                   >
                     <div className={`px-4 py-2 border-b flex items-center justify-between ${
@@ -530,14 +531,15 @@ export default function Dashboard() {
                 {showProfileMenu && profileMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={profileMenuRef}
-                    className={`fixed w-56 rounded-xl shadow-lg border py-2 z-[9999] ${
+                    className={`fixed w-56 rounded-xl shadow-lg border py-2 ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
                     }`}
                     style={{
                       top: `${profileMenuPosition.top}px`,
-                      right: `${profileMenuPosition.right}px`
+                      right: `${profileMenuPosition.right}px`,
+                      zIndex: 99999
                     }}
                   >
                     <div className={`px-4 py-2 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}>
