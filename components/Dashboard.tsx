@@ -552,7 +552,7 @@ export default function Dashboard() {
                         router.push('/about');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -569,7 +569,7 @@ export default function Dashboard() {
                         router.push('/tags');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -583,7 +583,7 @@ export default function Dashboard() {
 
                     <button
                       onClick={toggleTheme}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -608,7 +608,7 @@ export default function Dashboard() {
                         handleDeleteAllData();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-red-400 hover:bg-red-400/10'
                           : 'text-red-600 hover:bg-red-50'
@@ -625,7 +625,7 @@ export default function Dashboard() {
                         signOut();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-gray-50'
@@ -781,7 +781,7 @@ export default function Dashboard() {
                           }
                           setDragOverTarget(null);
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 relative group ${
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 relative group cursor-pointer ${
                           selectedProject === project.id
                             ? theme === 'night'
                               ? 'bg-[#91d2f4]/30 text-white font-medium'
@@ -862,7 +862,7 @@ export default function Dashboard() {
                           }
                           setDragOverTarget(null);
                         }}
-                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 relative group ${
+                        className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 relative group cursor-pointer ${
                           selectedCollection === collection.id
                             ? theme === 'night'
                               ? 'bg-[#91d2f4]/30 text-white font-medium'
@@ -901,7 +901,7 @@ export default function Dashboard() {
               <div>
                 <button
                   onClick={() => router.push('/tags')}
-                  className={`w-full px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 ${
+                  className={`w-full px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 cursor-pointer ${
                     theme === 'night'
                       ? 'bg-gradient-to-r from-[#91d2f4]/20 to-[#cba2ea]/20 text-[#cba2ea] hover:from-[#91d2f4]/30 hover:to-[#cba2ea]/30'
                       : 'bg-gradient-to-r from-[#91d2f4]/20 to-[#cba2ea]/20 text-[#cba2ea] hover:from-[#91d2f4]/30 hover:to-[#cba2ea]/30'
