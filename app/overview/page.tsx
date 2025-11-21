@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { Asset, Project, Collection as CollectionType } from '@/lib/types';
@@ -27,7 +28,9 @@ export default function OverviewPage() {
   const [collections, setCollections] = useState<CollectionType[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [profileMenuPosition, setProfileMenuPosition] = useState<{top: number, right: number} | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
 
   // Generate stars for galaxy background
   const stars = useMemo(() => {
@@ -263,8 +266,18 @@ export default function OverviewPage() {
               {/* Profile Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 hover:opacity-80 transition"
+                  ref={profileButtonRef}
+                  onClick={() => {
+                    if (profileButtonRef.current) {
+                      const rect = profileButtonRef.current.getBoundingClientRect();
+                      setProfileMenuPosition({
+                        top: rect.bottom + 8,
+                        right: window.innerWidth - rect.right
+                      });
+                    }
+                    setShowProfileMenu(!showProfileMenu);
+                  }}
+                  className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer"
                 >
                   <img
                     src={user?.photoURL || ''}
@@ -276,14 +289,19 @@ export default function OverviewPage() {
                   </svg>
                 </button>
 
-                {showProfileMenu && (
+                {showProfileMenu && profileMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={profileMenuRef}
-                    className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border py-2 z-[200] ${
+                    className={`fixed w-56 rounded-xl shadow-lg border py-2 ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
                     }`}
+                    style={{
+                      top: `${profileMenuPosition.top}px`,
+                      right: `${profileMenuPosition.right}px`,
+                      zIndex: 99999
+                    }}
                   >
                     <div className={`px-4 py-2 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}>
                       <p className={`text-sm font-semibold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>{user?.displayName}</p>
@@ -379,7 +397,8 @@ export default function OverviewPage() {
                       </svg>
                       <span>Sign Out</span>
                     </button>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>
