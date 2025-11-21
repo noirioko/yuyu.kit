@@ -245,7 +245,7 @@ export default function OverviewPage() {
             <div className="flex items-center gap-6">
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center gap-3 hover:opacity-80 transition"
+                className="flex items-center gap-3 hover:opacity-80 transition cursor-pointer"
               >
                 <img
                   src="/yuyu_mojis/yuwon_veryhappy.png"
@@ -313,7 +313,7 @@ export default function OverviewPage() {
                         router.push('/about');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -330,7 +330,7 @@ export default function OverviewPage() {
                         router.push('/tags');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -344,7 +344,7 @@ export default function OverviewPage() {
 
                     <button
                       onClick={toggleTheme}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -369,7 +369,7 @@ export default function OverviewPage() {
                         handleDeleteAllData();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-red-400 hover:bg-red-400/10'
                           : 'text-red-600 hover:bg-red-50'
@@ -386,7 +386,7 @@ export default function OverviewPage() {
                         signOut();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-gray-50'
