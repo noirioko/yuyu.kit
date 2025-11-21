@@ -404,7 +404,7 @@ export default function Dashboard() {
                 {showNotifications && (
                   <div
                     ref={notificationRef}
-                    className={`absolute right-0 mt-2 w-96 rounded-xl shadow-lg border py-2 z-[200] max-h-96 overflow-y-auto notification-dropdown ${
+                    className={`absolute right-0 mt-2 w-96 rounded-xl shadow-lg border py-2 z-[9999] max-h-96 overflow-y-auto notification-dropdown ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
@@ -500,7 +500,7 @@ export default function Dashboard() {
                 {showProfileMenu && (
                   <div
                     ref={profileMenuRef}
-                    className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border py-2 z-[200] ${
+                    className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border py-2 z-[9999] ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
