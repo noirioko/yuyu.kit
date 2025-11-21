@@ -214,7 +214,7 @@ export default function OverviewPage() {
       theme === 'night' ? 'bg-[#0a0f1e]' : 'bg-gray-50'
     }`}>
       {/* Header */}
-      <header className={`border-b transition-colors duration-300 relative ${
+      <header className={`border-b transition-colors duration-300 sticky top-0 z-50 ${
         theme === 'night'
           ? 'bg-gradient-to-r from-[#0a1c3d] via-[#1a2332] to-[#0a1c3d] border-white/10'
           : 'bg-gradient-to-r from-[#91d2f4]/30 via-[#cba2ea]/20 to-[#91d2f4]/30 border-gray-200'
