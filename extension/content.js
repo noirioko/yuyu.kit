@@ -180,10 +180,16 @@ function extractAssetData() {
               console.log('✅ Found ACON3D current price:', data.price);
 
               // If we found both prices and original > current, it's a sale
+              // IMPORTANT: Only mark as sale if original is SIGNIFICANTLY higher (at least 5% difference)
               if (acon3dOriginalPrice && acon3dOriginalPrice > val) {
-                data.originalPrice = acon3dOriginalPrice;
-                data.isOnSale = true;
-                console.log('🎉 ACON3D sale detected! Original:', acon3dOriginalPrice, 'Current:', val);
+                const discountPercent = ((acon3dOriginalPrice - val) / acon3dOriginalPrice) * 100;
+                if (discountPercent >= 5) {
+                  data.originalPrice = acon3dOriginalPrice;
+                  data.isOnSale = true;
+                  console.log('🎉 ACON3D sale detected! Original:', acon3dOriginalPrice, 'Current:', val, 'Discount:', Math.round(discountPercent) + '%');
+                } else {
+                  console.log('⚠️ Price difference too small (<5%), ignoring as sale');
+                }
               }
             }
           }
@@ -369,12 +375,16 @@ function extractAssetData() {
       // If we found crossed-out prices, use them as original price
       if (crossedOutPrices.length > 0) {
         const highestCrossedOut = Math.max(...crossedOutPrices);
-        // Only use if it's higher than current price (sanity check)
+        // Only use if it's significantly higher than current price (at least 5% difference)
         if (highestCrossedOut > data.price) {
-          data.originalPrice = highestCrossedOut;
-          data.isOnSale = true;
-          console.log('✅ Sale detected! Original:', data.originalPrice, 'Current:', data.price);
-          return; // Early return - we found the sale info
+          const discountPercent = ((highestCrossedOut - data.price) / highestCrossedOut) * 100;
+          if (discountPercent >= 5) {
+            data.originalPrice = highestCrossedOut;
+            data.isOnSale = true;
+            console.log('✅ Sale detected! Original:', data.originalPrice, 'Current:', data.price, 'Discount:', Math.round(discountPercent) + '%');
+          } else {
+            console.log('⚠️ Crossed-out price found but discount <5%, ignoring as sale');
+          }
         }
       }
 
@@ -384,7 +394,8 @@ function extractAssetData() {
           const discountMatch = bodyText.match(/(\d+)%\s*(?:off|discount|sale)/i);
           if (discountMatch) {
             const discountPercent = parseInt(discountMatch[1]);
-            if (discountPercent > 0 && discountPercent < 100) {
+            // Only accept discounts >= 5% and < 100%
+            if (discountPercent >= 5 && discountPercent < 100) {
               // Calculate original price from discount percentage
               const calculatedOriginal = data.price / (1 - discountPercent / 100);
               if (calculatedOriginal > data.price) {
@@ -392,6 +403,8 @@ function extractAssetData() {
                 data.isOnSale = true;
                 console.log(`💰 Calculated original price from ${discountPercent}% discount:`, data.originalPrice);
               }
+            } else {
+              console.log(`⚠️ Discount ${discountPercent}% is too small or invalid, ignoring`);
             }
           }
         } catch (e) {
@@ -399,17 +412,11 @@ function extractAssetData() {
         }
       }
 
-      // Check for sale/discount class names as final fallback
-      if (!data.isOnSale) {
-        try {
-          const hasSaleIndicator = document.querySelector('[class*="sale"], [class*="discount"]');
-          if (hasSaleIndicator) {
-            console.log('🏷️ Sale indicator found in DOM (but no price details)');
-            data.isOnSale = true;
-          }
-        } catch (e) {
-          console.log('⚠️ Error checking sale indicators:', e);
-        }
+      // REMOVED: Don't mark as sale just from class names - too many false positives
+      // Only mark as sale if we have actual price data (original vs current)
+      if (data.isOnSale && !data.originalPrice) {
+        console.log('⚠️ No original price found, clearing sale flag');
+        data.isOnSale = false;
       }
     } catch (error) {
       console.error('⚠️ Sale detection failed, continuing without sale info:', error);
