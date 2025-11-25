@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MyPebbles Asset Manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "One-click save assets from ACON3D and Clip Studio Paint to your MyPebbles library!",
   "permissions": [
     "storage",
