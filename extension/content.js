@@ -669,6 +669,13 @@ function isAssetPage() {
 
 // Create and inject the floating button
 async function createFloatingButton() {
+  // Check if button already exists - remove it first to allow re-creation
+  const existingButton = document.getElementById('mypebbles-btn');
+  if (existingButton) {
+    existingButton.remove();
+    console.log('🗑️ Removed existing button for re-creation');
+  }
+
   // Check if we're on a valid asset page
   if (!isAssetPage()) {
     console.log('⏭️ Not an asset page, skipping button injection');
@@ -681,9 +688,6 @@ async function createFloatingButton() {
     console.log('⏭️ Quick Add button is disabled, skipping button injection');
     return;
   }
-
-  // Check if button already exists
-  if (document.getElementById('mypebbles-btn')) return;
 
   const button = document.createElement('button');
   button.id = 'mypebbles-btn';
@@ -824,3 +828,15 @@ if (document.readyState === 'loading') {
 } else {
   createFloatingButton();
 }
+
+// Watch for URL changes (for single-page apps like ACON3D)
+let lastUrl = location.href;
+new MutationObserver(() => {
+  const currentUrl = location.href;
+  if (currentUrl !== lastUrl) {
+    lastUrl = currentUrl;
+    console.log('🔄 URL changed, re-checking page type:', currentUrl);
+    // Wait a bit for the page to update
+    setTimeout(createFloatingButton, 500);
+  }
+}).observe(document, { subtree: true, childList: true });
