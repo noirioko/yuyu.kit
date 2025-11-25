@@ -122,7 +122,7 @@ async function renderMain() {
       💾 Save Current Page
     </button>
 
-    <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 10px; margin: 12px 0; font-size: 11px; line-height: 1.4; opacity: 0.9;">
+    <div id="infoMessage" style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 10px; margin: 12px 0; font-size: 11px; line-height: 1.4; opacity: 0.9;">
       <div style="margin-bottom: 4px;">ℹ️ <strong>Note:</strong></div>
       Auto-fill isn't perfect! Please double-check the creator/brand and price fields before saving.
     </div>
@@ -140,18 +140,48 @@ async function renderMain() {
     </div>
   `;
 
-  // Detect current platform
+  // Detect current platform and check if it's a product page
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) {
       const url = new URL(tabs[0].url);
       let platform = 'Unknown';
+      let isProductPage = false;
 
-      if (url.hostname.includes('acon3d')) platform = 'ACON3D';
-      else if (url.hostname.includes('gumroad')) platform = 'Gumroad';
-      else if (url.hostname.includes('vgen')) platform = 'VGEN';
-      else if (url.hostname.includes('artstation')) platform = 'ArtStation';
+      if (url.hostname.includes('acon3d')) {
+        platform = 'ACON3D';
+        // Check if it's a product page: /en/product/123 or /ko/product/123 or /ja/product/123
+        isProductPage = /\/(en|ko|ja)\/product\/\d+/.test(url.pathname);
+      } else if (url.hostname.includes('clip-studio')) {
+        platform = 'CSP Asset';
+        // Check if it's a detail page: /detail?id=
+        isProductPage = url.search.includes('detail?id=');
+      } else if (url.hostname.includes('gumroad')) {
+        platform = 'Gumroad';
+      } else if (url.hostname.includes('vgen')) {
+        platform = 'VGEN';
+      } else if (url.hostname.includes('artstation')) {
+        platform = 'ArtStation';
+      }
 
       document.getElementById('platform').textContent = platform;
+
+      // Disable button if not on a product page (for ACON3D and CSP)
+      const addBtn = document.getElementById('addCurrentBtn');
+      const infoMessage = document.getElementById('infoMessage');
+
+      if ((platform === 'ACON3D' || platform === 'CSP Asset') && !isProductPage) {
+        addBtn.disabled = true;
+        addBtn.textContent = '⚠️ Not a Product Page';
+        addBtn.style.opacity = '0.5';
+        addBtn.style.cursor = 'not-allowed';
+
+        // Update info message
+        infoMessage.innerHTML = `
+          <div style="margin-bottom: 4px;">⚠️ <strong>Not on a Product Page</strong></div>
+          Navigate to a specific product page to use the Quick Add feature. The button only works on individual ${platform} product pages.
+        `;
+        infoMessage.style.background = 'rgba(239, 68, 68, 0.2)';
+      }
     }
   });
 
