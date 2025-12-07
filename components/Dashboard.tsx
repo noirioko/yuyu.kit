@@ -1305,7 +1305,7 @@ export default function Dashboard() {
 
       {/* Delete Confirmation Dialog */}
       {deletingAssetId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
           <div className="bg-white rounded-2xl max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-gray-800 mb-3">Delete Asset?</h3>
             <p className="text-gray-600 mb-6">

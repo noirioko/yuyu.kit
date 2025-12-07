@@ -54,7 +54,7 @@ export default function CollectionModal({ userId, onClose }: CollectionModalProp
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 modal-backdrop" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4 modal-backdrop" onClick={onClose}>
       <div className={`rounded-2xl max-w-md w-full transition-colors ${
         theme === 'night'
           ? 'bg-[#0a1c3d]/95 backdrop-blur-xl border border-white/20'

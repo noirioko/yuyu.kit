@@ -50,7 +50,7 @@ export default function ProjectModal({ userId, onClose }: ProjectModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
       <div className="bg-white rounded-2xl max-w-md w-full">
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-gray-800">New Project</h2>
