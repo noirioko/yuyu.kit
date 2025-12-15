@@ -1129,6 +1129,7 @@ export default function Dashboard() {
                 <p className={theme === 'night' ? 'text-white/70' : 'text-gray-500'}>No assets yet. Add your first asset!</p>
               </div>
             ) : (
+              <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {paginatedAssets.map(asset => (
                   <div
@@ -1388,6 +1389,7 @@ export default function Dashboard() {
                   </span>
                 </div>
               )}
+              </>
             )}
           </main>
         </div>
