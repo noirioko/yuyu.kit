@@ -13,14 +13,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'Missing userId parameter'
-      }, { status: 400 });
+      }, {
+        status: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      });
     }
 
     if (!db) {
       return NextResponse.json({
         success: false,
         error: 'Database not initialized'
-      }, { status: 500 });
+      }, {
+        status: 500,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type',
+        }
+      });
     }
 
     // Fetch all projects for this user
@@ -43,6 +57,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       projects: projects
+    }, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
     });
 
   } catch (error: any) {
@@ -50,7 +70,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: false,
       error: error.message || 'Failed to fetch projects'
-    }, { status: 500 });
+    }, {
+      status: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }
+    });
   }
 }
 

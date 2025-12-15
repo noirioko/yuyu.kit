@@ -217,7 +217,7 @@ export default function OverviewPage() {
       <header className={`border-b transition-colors duration-300 sticky top-0 z-50 ${
         theme === 'night'
           ? 'bg-gradient-to-r from-[#0a1c3d] via-[#1a2332] to-[#0a1c3d] border-white/10'
-          : 'bg-gradient-to-r from-[#91d2f4]/30 via-[#cba2ea]/20 to-[#91d2f4]/30 border-gray-200'
+          : 'bg-gradient-to-r from-[#91d2f4]/90 via-[#cba2ea]/80 to-[#91d2f4]/90 border-gray-200'
       }`}>
         {/* Animated Stars (Night Mode Only) */}
         {theme === 'night' && (
@@ -240,24 +240,38 @@ export default function OverviewPage() {
           </div>
         )}
 
-        <div className="container mx-auto px-6 py-4 relative z-10">
+        <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 md:gap-6">
+              {/* Back button on mobile */}
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center gap-3 hover:opacity-80 transition cursor-pointer"
+                className={`sm:hidden p-2 -ml-2 rounded-lg transition ${
+                  theme === 'night' ? 'text-white hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="hidden sm:flex items-center gap-2 md:gap-3 hover:opacity-80 transition cursor-pointer"
               >
                 <img
                   src="/yuyu_mojis/yuwon_veryhappy.png"
                   alt="MyPebbles"
-                  className="h-10 w-auto rounded-lg object-contain"
+                  className="h-8 md:h-10 w-auto rounded-lg object-contain"
                 />
-                <span className={`text-2xl font-semibold ${
+                <span className={`text-xl md:text-2xl font-semibold ${
                   theme === 'night' ? 'text-white' : 'text-gray-800'
                 }`}>MyPebbles</span>
               </button>
-              <span className={theme === 'night' ? 'text-white/40' : 'text-gray-400'}>/</span>
-              <span className={`text-xl font-medium ${
+              <span className={`sm:hidden text-lg font-semibold ${
+                theme === 'night' ? 'text-white' : 'text-gray-800'
+              }`}>Overview</span>
+              <span className={`hidden sm:inline ${theme === 'night' ? 'text-white/40' : 'text-gray-400'}`}>/</span>
+              <span className={`hidden sm:inline text-lg md:text-xl font-medium ${
                 theme === 'night' ? 'text-white/80' : 'text-gray-600'
               }`}>Overview</span>
             </div>
@@ -407,7 +421,7 @@ export default function OverviewPage() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12 relative">
+      <div className="container mx-auto px-4 md:px-6 py-8 md:py-12 relative">
         {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
@@ -421,14 +435,14 @@ export default function OverviewPage() {
           <div className="absolute inset-0 bg-white pointer-events-none" style={{ opacity: 0.5 }} />
         )}
 
-        <div className="max-w-5xl mx-auto relative z-10">
+        <div className="max-w-5xl mx-auto relative">
           {/* Page Title */}
-          <div className="mb-8">
+          <div className="mb-6 md:mb-8">
             <div className="flex items-center gap-3 mb-2">
-              <svg className="w-8 h-8 flex-shrink-0 text-[#cba2ea]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 md:w-8 h-6 md:h-8 flex-shrink-0 text-[#cba2ea]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              <h1 className={`text-4xl font-bold ${
+              <h1 className={`text-2xl md:text-4xl font-bold ${
                 theme === 'night' ? 'text-white' : 'text-gray-800'
               }`}>Overview</h1>
             </div>

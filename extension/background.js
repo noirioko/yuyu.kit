@@ -1,7 +1,42 @@
 // YuyuAsset Manager - Background Service Worker
 // This runs in the background and handles messages from content scripts
 
-const YUYU_ASSET_URL = 'https://yuyu-kit.vercel.app';
+// Auto-detect: try localhost first, fallback to production
+const URLS = {
+  local: 'http://localhost:3000',
+  production: 'https://pebblz.xyz'
+};
+
+let YUYU_ASSET_URL = URLS.production; // Default to production
+
+// Check if localhost is available
+async function detectServer() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1000);
+
+    const response = await fetch(`${URLS.local}/api/health`, {
+      method: 'HEAD',
+      signal: controller.signal
+    }).catch(() => null);
+
+    clearTimeout(timeout);
+
+    if (response && response.ok) {
+      YUYU_ASSET_URL = URLS.local;
+      console.log('🏠 Background: Using localhost');
+    } else {
+      YUYU_ASSET_URL = URLS.production;
+      console.log('🌐 Background: Using production (pebblz.xyz)');
+    }
+  } catch (e) {
+    YUYU_ASSET_URL = URLS.production;
+    console.log('🌐 Background: Using production (pebblz.xyz)');
+  }
+}
+
+// Detect server on startup
+detectServer();
 
 // Listen for messages from content script (Quick Add button)
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -40,6 +75,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // Handle adding a single asset
 async function handleAddAsset(assetData) {
   console.log('🚀 handleAddAsset started');
+
+  // Make sure we have the right server URL
+  await detectServer();
 
   try {
     const { apiKey, defaultStatus, selectedProject } = await chrome.storage.sync.get(['apiKey', 'defaultStatus', 'selectedProject']);

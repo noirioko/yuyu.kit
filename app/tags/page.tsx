@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { db } from '@/lib/firebase';
@@ -24,7 +25,9 @@ export default function TagsPage() {
   const [viewingAsset, setViewingAsset] = useState<Asset | null>(null);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [profileMenuPosition, setProfileMenuPosition] = useState<{top: number, right: number} | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
 
   // Load assets
   useEffect(() => {
@@ -227,26 +230,40 @@ export default function TagsPage() {
       <header className={`border-b transition-colors ${
         theme === 'night'
           ? 'bg-gradient-to-r from-[#101c29] via-[#0a1c3d] via-[#131f5a] via-[#3f3381] to-[#2868c6] border-[#2868c6]/30'
-          : 'bg-white border-gray-200'
+          : 'bg-gradient-to-r from-[#91d2f4]/90 via-[#cba2ea]/80 to-[#91d2f4]/90 border-gray-200'
       }`}>
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 md:gap-6">
+              {/* Back button on mobile */}
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center gap-3 hover:opacity-80 transition"
+                className={`sm:hidden p-2 -ml-2 rounded-lg transition ${
+                  theme === 'night' ? 'text-white hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="hidden sm:flex items-center gap-2 md:gap-3 hover:opacity-80 transition cursor-pointer"
               >
                 <img
                   src="/yuyu_mojis/yuwon_veryhappy.png"
                   alt="MyPebbles"
-                  className="h-10 w-auto rounded-lg object-contain"
+                  className="h-8 md:h-10 w-auto rounded-lg object-contain"
                 />
-                <span className={`text-2xl font-semibold ${
+                <span className={`text-xl md:text-2xl font-semibold ${
                   theme === 'night' ? 'text-white' : 'text-gray-800'
                 }`}>MyPebbles</span>
               </button>
-              <span className={theme === 'night' ? 'text-white/40' : 'text-gray-400'}>/</span>
-              <span className={`text-xl font-medium ${
+              <span className={`sm:hidden text-lg font-semibold ${
+                theme === 'night' ? 'text-white' : 'text-gray-800'
+              }`}>Tags</span>
+              <span className={`hidden sm:inline ${theme === 'night' ? 'text-white/40' : 'text-gray-400'}`}>/</span>
+              <span className={`hidden sm:inline text-lg md:text-xl font-medium ${
                 theme === 'night' ? 'text-white/80' : 'text-gray-600'
               }`}>Tags</span>
             </div>
@@ -255,8 +272,18 @@ export default function TagsPage() {
               {/* Profile Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 hover:opacity-80 transition"
+                  ref={profileButtonRef}
+                  onClick={() => {
+                    if (profileButtonRef.current) {
+                      const rect = profileButtonRef.current.getBoundingClientRect();
+                      setProfileMenuPosition({
+                        top: rect.bottom + 8,
+                        right: window.innerWidth - rect.right
+                      });
+                    }
+                    setShowProfileMenu(!showProfileMenu);
+                  }}
+                  className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer"
                 >
                   <img
                     src={user?.photoURL || ''}
@@ -268,14 +295,19 @@ export default function TagsPage() {
                   </svg>
                 </button>
 
-                {showProfileMenu && (
+                {showProfileMenu && profileMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={profileMenuRef}
-                    className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border py-2 z-[200] ${
+                    className={`fixed w-56 rounded-xl shadow-lg border py-2 ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
                     }`}
+                    style={{
+                      top: `${profileMenuPosition.top}px`,
+                      right: `${profileMenuPosition.right}px`,
+                      zIndex: 99999
+                    }}
                   >
                     <div className={`px-4 py-2 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}>
                       <p className={`text-sm font-semibold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>{user?.displayName}</p>
@@ -287,7 +319,7 @@ export default function TagsPage() {
                         router.push('/about');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -304,7 +336,7 @@ export default function TagsPage() {
                         router.push('/overview');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -318,7 +350,7 @@ export default function TagsPage() {
 
                     <button
                       onClick={toggleTheme}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -343,7 +375,7 @@ export default function TagsPage() {
                         handleDeleteAllData();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-red-400 hover:bg-red-400/10'
                           : 'text-red-600 hover:bg-red-50'
@@ -360,7 +392,7 @@ export default function TagsPage() {
                         signOut();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-gray-50'
@@ -371,7 +403,8 @@ export default function TagsPage() {
                       </svg>
                       <span>Sign Out</span>
                     </button>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>
@@ -380,11 +413,11 @@ export default function TagsPage() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-6">
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 md:gap-6">
           {/* Tags Sidebar */}
-          <div className="col-span-3">
-            <div className={`rounded-xl shadow-sm p-6 sticky top-6 transition-colors ${
+          <div className="w-full lg:col-span-3">
+            <div className={`rounded-xl shadow-sm p-4 md:p-6 lg:sticky lg:top-6 transition-colors ${
               theme === 'night'
                 ? 'bg-white/5 backdrop-blur-lg border border-white/10'
                 : 'bg-white'
@@ -411,7 +444,7 @@ export default function TagsPage() {
               </div>
 
               {/* Tags Pills */}
-              <div className="flex flex-wrap gap-2 max-h-[calc(100vh-300px)] overflow-y-auto">
+              <div className="flex flex-wrap gap-2 max-h-48 lg:max-h-[calc(100vh-300px)] overflow-y-auto">
                 {filteredTags.length === 0 ? (
                   <p className={`text-sm text-center py-8 w-full ${
                     theme === 'night' ? 'text-white/60' : 'text-gray-500'
@@ -453,7 +486,7 @@ export default function TagsPage() {
           </div>
 
           {/* Assets Grid */}
-          <div className="col-span-9">
+          <div className="w-full lg:col-span-9">
             {selectedTag ? (
               <div>
                 <div className="mb-6">
@@ -467,7 +500,7 @@ export default function TagsPage() {
                   </p>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {selectedAssets.map((asset) => (
                     <div
                       key={asset.id}

@@ -1,9 +1,44 @@
 // MyPebbles Manager - Popup Script
 
-const YUYU_ASSET_URL = 'https://yuyu-kit.vercel.app';
+// Auto-detect: try localhost first, fallback to production
+const URLS = {
+  local: 'http://localhost:3000',
+  production: 'https://pebblz.xyz'
+};
+
+let YUYU_ASSET_URL = URLS.production; // Default to production
+
+// Check if localhost is available
+async function detectServer() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 1000); // 1 second timeout
+
+    const response = await fetch(`${URLS.local}/api/health`, {
+      method: 'HEAD',
+      signal: controller.signal
+    }).catch(() => null);
+
+    clearTimeout(timeout);
+
+    if (response && response.ok) {
+      YUYU_ASSET_URL = URLS.local;
+      console.log('🏠 Using localhost');
+    } else {
+      YUYU_ASSET_URL = URLS.production;
+      console.log('🌐 Using production (pebblz.xyz)');
+    }
+  } catch (e) {
+    YUYU_ASSET_URL = URLS.production;
+    console.log('🌐 Using production (pebblz.xyz)');
+  }
+}
 
 // Load settings and render popup
 async function init() {
+  // Auto-detect which server to use
+  await detectServer();
+
   const { apiKey } = await chrome.storage.sync.get(['apiKey']);
 
   if (!apiKey) {

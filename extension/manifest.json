@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MyPebbles Asset Manager",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "One-click save assets from ACON3D and Clip Studio Paint to your MyPebbles library!",
   "permissions": [
     "storage",
@@ -12,7 +12,8 @@
     "service_worker": "background.js"
   },
   "host_permissions": [
-    "https://*/*"
+    "https://*/*",
+    "http://localhost/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -36,7 +37,11 @@
         "*://artstation.com/*",
         "*://*.artstation.com/*",
         "*://blendermarket.com/*",
-        "*://*.blendermarket.com/*"
+        "*://*.blendermarket.com/*",
+        "*://amazon.com/*",
+        "*://*.amazon.com/*",
+        "*://amazon.co.jp/*",
+        "*://*.amazon.co.jp/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"]

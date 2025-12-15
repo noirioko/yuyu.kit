@@ -55,6 +55,9 @@ export default function Dashboard() {
   const profileButtonRef = useRef<HTMLButtonElement>(null);
   const [draggedAsset, setDraggedAsset] = useState<Asset | null>(null);
   const [dragOverTarget, setDragOverTarget] = useState<{type: 'project' | 'collection', id: string} | null>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const assetsPerPage = 50;
 
   // Click outside to close notifications
   useEffect(() => {
@@ -174,6 +177,16 @@ export default function Dashboard() {
       // Sort by createdAt descending (newest first)
       return b.createdAt.getTime() - a.createdAt.getTime();
     });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredAssets.length / assetsPerPage);
+  const startIndex = (currentPage - 1) * assetsPerPage;
+  const paginatedAssets = filteredAssets.slice(startIndex, startIndex + assetsPerPage);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [view, selectedProject, selectedCollection]);
 
   const handleDeleteAsset = async (assetId: string) => {
     if (!db) return;
@@ -321,7 +334,7 @@ export default function Dashboard() {
       <header className={`border-b transition-colors duration-300 sticky top-0 z-[500] ${
         theme === 'night'
           ? 'bg-gradient-to-r from-[#101c29] via-[#0a1c3d] via-[#131f5a] via-[#3f3381] to-[#2868c6] backdrop-blur-lg border-[#2868c6]/30'
-          : 'bg-gradient-to-r from-[#91d2f4]/30 via-[#cba2ea]/20 to-[#91d2f4]/30 border-gray-200'
+          : 'bg-gradient-to-r from-[#91d2f4]/90 via-[#cba2ea]/80 to-[#91d2f4]/90 border-gray-200'
       }`}>
         {/* Stars for night mode */}
         {theme === 'night' && (
@@ -343,23 +356,35 @@ export default function Dashboard() {
             ))}
           </div>
         )}
-        <div className="container mx-auto px-6 py-4">
+        <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className={`md:hidden p-2 rounded-lg transition cursor-pointer ${
+                  theme === 'night' ? 'text-white hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               <img
                 src="/yuyu_mojis/yuwon_veryhappy.png"
                 alt="MyPebbles"
-                className="h-10 w-auto rounded-lg object-contain"
+                className="h-8 md:h-10 w-auto rounded-lg object-contain"
               />
-              <span className={`text-2xl font-semibold transition-colors ${
+              <span className={`text-xl md:text-2xl font-semibold transition-colors ${
                 theme === 'night' ? 'text-white' : 'text-gray-800'
               }`}>MyPebbles</span>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
+              {/* Hide utility buttons on mobile */}
               <button
                 onClick={handleAutoTagAll}
-                className={`text-xs transition ${
+                className={`hidden md:block text-xs transition ${
                   theme === 'night'
                     ? 'text-white/70 hover:text-[#91d2f4]'
                     : 'text-gray-500 hover:text-[#2868c6]'
@@ -375,7 +400,7 @@ export default function Dashboard() {
                     alert('User ID copied! Paste it in the browser extension.');
                   }
                 }}
-                className={`text-xs transition ${
+                className={`hidden md:block text-xs transition cursor-pointer ${
                   theme === 'night'
                     ? 'text-white/70 hover:text-[#91d2f4]'
                     : 'text-gray-500 hover:text-[#2868c6]'
@@ -399,7 +424,7 @@ export default function Dashboard() {
                     }
                     setShowNotifications(!showNotifications);
                   }}
-                  className={`relative transition ${
+                  className={`relative transition cursor-pointer ${
                     theme === 'night'
                       ? 'text-white hover:text-[#91d2f4]'
                       : 'text-gray-600 hover:text-[#2868c6]'
@@ -419,7 +444,7 @@ export default function Dashboard() {
                 {showNotifications && notificationMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={notificationRef}
-                    className={`fixed w-96 rounded-xl shadow-lg border py-2 max-h-96 overflow-y-auto notification-dropdown ${
+                    className={`fixed w-[calc(100vw-2rem)] sm:w-96 rounded-xl shadow-lg border py-2 max-h-96 overflow-y-auto notification-dropdown ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
@@ -437,7 +462,7 @@ export default function Dashboard() {
                       {notifications.length > 0 && (
                         <button
                           onClick={() => setNotifications([])}
-                          className="text-xs text-[#2868c6] hover:text-[#3f3381]"
+                          className="text-xs text-[#2868c6] hover:text-[#3f3381] cursor-pointer"
                         >
                           Clear All
                         </button>
@@ -516,14 +541,14 @@ export default function Dashboard() {
                     }
                     setShowProfileMenu(!showProfileMenu);
                   }}
-                  className="flex items-center gap-2 hover:opacity-80 transition"
+                  className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer"
                 >
                   <img
                     src={user?.photoURL || ''}
                     alt={user?.displayName || ''}
                     className="w-10 h-10 rounded-full"
                   />
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className={`w-4 h-4 ${theme === 'night' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
@@ -645,16 +670,40 @@ export default function Dashboard() {
         </div>
       </header>
 
+      {/* Mobile Sidebar Overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-[400] md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-8">
-        <div className="grid grid-cols-12 gap-6">
-          {/* Sidebar */}
-          <aside className="col-span-3">
-            <div className={`rounded-xl shadow-sm p-6 transition-all ${
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
+        <div className="flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6">
+          {/* Sidebar - Hidden on mobile, shown as slide-out drawer */}
+          <aside className={`
+            fixed md:sticky top-0 left-0 h-full md:h-fit md:top-4 w-72 md:w-auto
+            md:col-span-3 z-[450] md:z-auto md:self-start
+            transform transition-transform duration-300 ease-in-out
+            ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}>
+            <div className={`h-full md:max-h-[calc(100vh-2rem)] rounded-none md:rounded-xl shadow-sm p-6 pt-20 md:pt-6 transition-all overflow-y-auto ${
               theme === 'night'
-                ? 'bg-white/5 backdrop-blur-lg border border-white/10'
-                : 'bg-white'
+                ? 'bg-[#0a1c3d] md:bg-white/5 backdrop-blur-lg border-r md:border border-white/10'
+                : 'bg-white border-r md:border-none border-gray-200'
             }`}>
+              {/* Close button for mobile */}
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className={`absolute top-4 right-4 md:hidden p-2 rounded-lg ${
+                  theme === 'night' ? 'text-white hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
               {/* View Filters */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-3">
@@ -671,7 +720,7 @@ export default function Dashboard() {
                 </div>
                 <div className="space-y-2">
                   <button
-                    onClick={() => { setView('all'); setSelectedProject(null); setSelectedCollection(null); }}
+                    onClick={() => { setView('all'); setSelectedProject(null); setSelectedCollection(null); setMobileMenuOpen(false); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
                       view === 'all' && !selectedProject && !selectedCollection
                         ? theme === 'night'
@@ -692,7 +741,7 @@ export default function Dashboard() {
                     All Pebbles ({assets.length})
                   </button>
                   <button
-                    onClick={() => { setView('wishlist'); setSelectedProject(null); setSelectedCollection(null); }}
+                    onClick={() => { setView('wishlist'); setSelectedProject(null); setSelectedCollection(null); setMobileMenuOpen(false); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
                       view === 'wishlist' && !selectedProject && !selectedCollection
                         ? theme === 'night'
@@ -712,7 +761,7 @@ export default function Dashboard() {
                     Wishlist ({assets.filter(a => a.status === 'wishlist').length})
                   </button>
                   <button
-                    onClick={() => { setView('bought'); setSelectedProject(null); setSelectedCollection(null); }}
+                    onClick={() => { setView('bought'); setSelectedProject(null); setSelectedCollection(null); setMobileMenuOpen(false); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
                       view === 'bought' && !selectedProject && !selectedCollection
                         ? theme === 'night'
@@ -759,7 +808,7 @@ export default function Dashboard() {
                     return (
                       <button
                         key={project.id}
-                        onClick={() => { setSelectedProject(project.id); setSelectedCollection(null); setView('all'); }}
+                        onClick={() => { setSelectedProject(project.id); setSelectedCollection(null); setView('all'); setMobileMenuOpen(false); }}
                         onContextMenu={(e) => {
                           e.preventDefault();
                           setEditingProject(project);
@@ -840,7 +889,7 @@ export default function Dashboard() {
                     return (
                       <button
                         key={collection.id}
-                        onClick={() => { setSelectedCollection(collection.id); setSelectedProject(null); setView('all'); }}
+                        onClick={() => { setSelectedCollection(collection.id); setSelectedProject(null); setView('all'); setMobileMenuOpen(false); }}
                         onContextMenu={(e) => {
                           e.preventDefault();
                           setEditingCollection(collection);
@@ -900,7 +949,10 @@ export default function Dashboard() {
               {/* Browse by Tags */}
               <div>
                 <button
-                  onClick={() => router.push('/tags')}
+                  onClick={() => {
+                    router.push('/tags');
+                    setMobileMenuOpen(false);
+                  }}
                   className={`w-full px-4 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2 cursor-pointer ${
                     theme === 'night'
                       ? 'bg-gradient-to-r from-[#91d2f4]/20 to-[#cba2ea]/20 text-[#cba2ea] hover:from-[#91d2f4]/30 hover:to-[#cba2ea]/30'
@@ -911,13 +963,42 @@ export default function Dashboard() {
                   <span>Browse by Tags</span>
                 </button>
               </div>
+
+              {/* Mobile-only utility buttons */}
+              <div className="md:hidden mt-6 pt-6 border-t border-white/10 space-y-2">
+                <button
+                  onClick={() => {
+                    handleAutoTagAll();
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
+                    theme === 'night' ? 'text-white/70 hover:bg-white/5' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  🏷️ Auto-Tag All
+                </button>
+                <button
+                  onClick={() => {
+                    if (user?.uid) {
+                      navigator.clipboard.writeText(user.uid);
+                      alert('User ID copied! Paste it in the browser extension.');
+                    }
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
+                    theme === 'night' ? 'text-white/70 hover:bg-white/5' : 'text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  📋 Copy User ID
+                </button>
+              </div>
             </div>
           </aside>
 
           {/* Assets Grid */}
-          <main className="col-span-9">
-            <div className="flex items-center justify-between mb-6">
-              <h1 className={`text-2xl font-bold flex items-center gap-2 ${
+          <main className="w-full md:col-span-9">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <h1 className={`text-xl md:text-2xl font-bold flex items-center gap-2 ${
                 theme === 'night' ? 'text-white' : 'text-gray-800'
               }`}>
                 {selectedProject ? (
@@ -986,7 +1067,7 @@ export default function Dashboard() {
                     View Detailed Overview →
                   </button>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 md:gap-4">
                   {(() => {
                     const wishlistCount = assets.filter(a => a.status === 'wishlist').length;
                     const boughtCount = assets.filter(a => a.status === 'bought').length;
@@ -1048,8 +1129,8 @@ export default function Dashboard() {
                 <p className={theme === 'night' ? 'text-white/70' : 'text-gray-500'}>No assets yet. Add your first asset!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-4">
-                {filteredAssets.map(asset => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {paginatedAssets.map(asset => (
                   <div
                     key={asset.id}
                     draggable
@@ -1240,6 +1321,73 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className={`flex items-center justify-center gap-2 mt-6 p-4 rounded-xl ${
+                  theme === 'night'
+                    ? 'bg-white/5 backdrop-blur-lg border border-white/10'
+                    : 'bg-white shadow-sm'
+                }`}>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className={`px-3 py-2 rounded-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      theme === 'night'
+                        ? 'bg-white/10 text-white hover:bg-white/20'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    ← Prev
+                  </button>
+
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(page => {
+                        // Show first, last, current, and neighbors
+                        if (page === 1 || page === totalPages) return true;
+                        if (Math.abs(page - currentPage) <= 1) return true;
+                        return false;
+                      })
+                      .map((page, idx, arr) => (
+                        <span key={page} className="flex items-center">
+                          {idx > 0 && arr[idx - 1] !== page - 1 && (
+                            <span className={`px-2 ${theme === 'night' ? 'text-white/50' : 'text-gray-400'}`}>...</span>
+                          )}
+                          <button
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-10 h-10 rounded-lg transition cursor-pointer ${
+                              currentPage === page
+                                ? 'bg-[#2868c6] text-white font-semibold'
+                                : theme === 'night'
+                                  ? 'bg-white/10 text-white hover:bg-white/20'
+                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </span>
+                      ))
+                    }
+                  </div>
+
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className={`px-3 py-2 rounded-lg transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                      theme === 'night'
+                        ? 'bg-white/10 text-white hover:bg-white/20'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                  >
+                    Next →
+                  </button>
+
+                  <span className={`ml-4 text-sm ${theme === 'night' ? 'text-white/60' : 'text-gray-500'}`}>
+                    {startIndex + 1}-{Math.min(startIndex + assetsPerPage, filteredAssets.length)} of {filteredAssets.length}
+                  </span>
+                </div>
+              )}
             )}
           </main>
         </div>

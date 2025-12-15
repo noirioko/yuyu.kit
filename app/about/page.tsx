@@ -4,6 +4,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from '@/lib/ThemeContext';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { Asset, Project, Collection as CollectionType } from '@/lib/types';
@@ -18,7 +19,9 @@ export default function AboutPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [collections, setCollections] = useState<CollectionType[]>([]);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [profileMenuPosition, setProfileMenuPosition] = useState<{top: number, right: number} | null>(null);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
 
   // Fetch assets
   useEffect(() => {
@@ -159,7 +162,7 @@ export default function AboutPage() {
       <header className={`border-b transition-colors duration-300 relative ${
         theme === 'night'
           ? 'bg-gradient-to-r from-[#0a1c3d] via-[#1a2332] to-[#0a1c3d] border-white/10'
-          : 'bg-gradient-to-r from-[#91d2f4]/30 via-[#cba2ea]/20 to-[#91d2f4]/30 border-gray-200'
+          : 'bg-gradient-to-r from-[#91d2f4]/90 via-[#cba2ea]/80 to-[#91d2f4]/90 border-gray-200'
       }`}>
         {/* Animated Stars (Night Mode Only) */}
         {theme === 'night' && (
@@ -182,24 +185,39 @@ export default function AboutPage() {
           </div>
         )}
 
-        <div className="container mx-auto px-6 py-4 relative z-10">
+        <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 md:gap-6">
+              {/* Back button on mobile */}
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center gap-3 hover:opacity-80 transition"
+                className={`sm:hidden p-2 -ml-2 rounded-lg transition ${
+                  theme === 'night' ? 'text-white hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <a
+                href="/"
+                onClick={(e) => { e.preventDefault(); router.push('/'); }}
+                className="hidden sm:flex items-center gap-2 md:gap-3 hover:opacity-80 transition cursor-pointer"
               >
                 <img
                   src="/yuyu_mojis/yuwon_veryhappy.png"
                   alt="MyPebbles"
-                  className="h-10 w-auto rounded-lg object-contain"
+                  className="h-8 md:h-10 w-auto rounded-lg object-contain"
                 />
-                <span className={`text-2xl font-semibold ${
+                <span className={`text-xl md:text-2xl font-semibold ${
                   theme === 'night' ? 'text-white' : 'text-gray-800'
                 }`}>MyPebbles</span>
-              </button>
-              <span className={theme === 'night' ? 'text-white/40' : 'text-gray-400'}>/</span>
-              <span className={`text-xl font-medium ${
+              </a>
+              <span className={`sm:hidden text-lg font-semibold ${
+                theme === 'night' ? 'text-white' : 'text-gray-800'
+              }`}>About</span>
+              <span className={`hidden sm:inline ${theme === 'night' ? 'text-white/40' : 'text-gray-400'}`}>/</span>
+              <span className={`hidden sm:inline text-lg md:text-xl font-medium ${
                 theme === 'night' ? 'text-white/80' : 'text-gray-600'
               }`}>About</span>
             </div>
@@ -208,8 +226,18 @@ export default function AboutPage() {
               {/* Profile Dropdown */}
               <div className="relative">
                 <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="flex items-center gap-2 hover:opacity-80 transition"
+                  ref={profileButtonRef}
+                  onClick={() => {
+                    if (profileButtonRef.current) {
+                      const rect = profileButtonRef.current.getBoundingClientRect();
+                      setProfileMenuPosition({
+                        top: rect.bottom + 8,
+                        right: window.innerWidth - rect.right
+                      });
+                    }
+                    setShowProfileMenu(!showProfileMenu);
+                  }}
+                  className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer"
                 >
                   <img
                     src={user?.photoURL || ''}
@@ -221,14 +249,19 @@ export default function AboutPage() {
                   </svg>
                 </button>
 
-                {showProfileMenu && (
+                {showProfileMenu && profileMenuPosition && typeof window !== 'undefined' && createPortal(
                   <div
                     ref={profileMenuRef}
-                    className={`absolute right-0 mt-2 w-56 rounded-xl shadow-lg border py-2 z-[200] ${
+                    className={`fixed w-56 rounded-xl shadow-lg border py-2 ${
                       theme === 'night'
                         ? 'bg-[#0a1c3d] border-white/20'
                         : 'bg-white border-gray-200'
                     }`}
+                    style={{
+                      top: `${profileMenuPosition.top}px`,
+                      right: `${profileMenuPosition.right}px`,
+                      zIndex: 99999
+                    }}
                   >
                     <div className={`px-4 py-2 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}>
                       <p className={`text-sm font-semibold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>{user?.displayName}</p>
@@ -240,7 +273,7 @@ export default function AboutPage() {
                         router.push('/overview');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -257,7 +290,7 @@ export default function AboutPage() {
                         router.push('/tags');
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -271,7 +304,7 @@ export default function AboutPage() {
 
                     <button
                       onClick={toggleTheme}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-[#91d2f4]/20'
@@ -296,7 +329,7 @@ export default function AboutPage() {
                         handleDeleteAllData();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-red-400 hover:bg-red-400/10'
                           : 'text-red-600 hover:bg-red-50'
@@ -313,7 +346,7 @@ export default function AboutPage() {
                         signOut();
                         setShowProfileMenu(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 ${
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
                           ? 'text-white hover:bg-white/10'
                           : 'text-gray-700 hover:bg-gray-50'
@@ -324,7 +357,8 @@ export default function AboutPage() {
                       </svg>
                       <span>Sign Out</span>
                     </button>
-                  </div>
+                  </div>,
+                  document.body
                 )}
               </div>
             </div>
@@ -333,7 +367,7 @@ export default function AboutPage() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12 relative">
+      <div className="container mx-auto px-4 md:px-6 py-8 md:py-12 relative">
         {/* Background Image */}
         <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat pointer-events-none"
@@ -347,7 +381,7 @@ export default function AboutPage() {
           <div className="absolute inset-0 bg-white pointer-events-none" style={{ opacity: 0.5 }} />
         )}
 
-        <div className="max-w-3xl mx-auto relative z-10">
+        <div className="max-w-3xl mx-auto relative">
           <div className={`rounded-2xl shadow-sm overflow-hidden transition-colors ${
             theme === 'night'
               ? 'bg-white/5 backdrop-blur-lg border border-white/10'
@@ -384,6 +418,74 @@ export default function AboutPage() {
                 MyPebbles is your personal digital asset library for managing ACON3D, CSP, and other marketplace assets.
                 Keep track of what you want to buy, what you've already bought, and organize everything by project!
               </p>
+
+              {/* How to Use Section */}
+              <h2 className={`text-xl font-semibold mt-8 mb-4 ${
+                theme === 'night' ? 'text-white' : 'text-gray-800'
+              }`}>🚀 How to Use MyPebbles</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                {/* Step 1 */}
+                <div className={`rounded-xl p-4 text-center ${
+                  theme === 'night'
+                    ? 'bg-gradient-to-b from-[#2868c6]/20 to-[#91d2f4]/10 border border-white/10'
+                    : 'bg-gradient-to-b from-[#91d2f4]/20 to-[#91d2f4]/5 border border-[#91d2f4]/30'
+                }`}>
+                  <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold ${
+                    theme === 'night' ? 'bg-[#2868c6] text-white' : 'bg-[#2868c6] text-white'
+                  }`}>1</div>
+                  <h3 className={`font-semibold mb-1 ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>Install Extension</h3>
+                  <p className={`text-xs mb-3 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Get our Chrome extension from the Web Store</p>
+                  <a href="https://chromewebstore.google.com/detail/mypebbles-asset-manager/chedpgdgjdnjdfkkpebikmcdnlfafpda" target="_blank" rel="noopener noreferrer" className="block">
+                    <div className="w-full rounded-lg overflow-hidden hover:scale-105 transition-transform">
+                      <img src="/images/ss-howto1.png" alt="Install Extension" className="w-full h-auto rounded-lg" />
+                    </div>
+                  </a>
+                </div>
+
+                {/* Step 2 */}
+                <div className={`rounded-xl p-4 text-center ${
+                  theme === 'night'
+                    ? 'bg-gradient-to-b from-[#cba2ea]/20 to-[#cba2ea]/10 border border-white/10'
+                    : 'bg-gradient-to-b from-[#cba2ea]/20 to-[#cba2ea]/5 border border-[#cba2ea]/30'
+                }`}>
+                  <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold ${
+                    theme === 'night' ? 'bg-[#cba2ea] text-white' : 'bg-[#cba2ea] text-white'
+                  }`}>2</div>
+                  <h3 className={`font-semibold mb-1 ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>Copy User ID</h3>
+                  <p className={`text-xs mb-3 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Click "Copy User ID" in the dashboard header</p>
+                  <div className="w-full rounded-lg overflow-hidden">
+                    <img src="/images/ss-howto2.png" alt="Copy User ID" className="w-full h-auto rounded-lg" />
+                  </div>
+                </div>
+
+                {/* Step 3 */}
+                <div className={`rounded-xl p-4 text-center ${
+                  theme === 'night'
+                    ? 'bg-gradient-to-b from-[#91d2f4]/20 to-[#2868c6]/10 border border-white/10'
+                    : 'bg-gradient-to-b from-[#2868c6]/20 to-[#2868c6]/5 border border-[#2868c6]/30'
+                }`}>
+                  <div className={`w-12 h-12 mx-auto mb-3 rounded-full flex items-center justify-center text-2xl font-bold ${
+                    theme === 'night' ? 'bg-[#3f3381] text-white' : 'bg-[#3f3381] text-white'
+                  }`}>3</div>
+                  <h3 className={`font-semibold mb-1 ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>Start Collecting!</h3>
+                  <p className={`text-xs mb-3 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Paste ID in extension & save assets with one click</p>
+                  <div className="w-full rounded-lg overflow-hidden">
+                    <img src="/images/ss-howto3.png" alt="Start Collecting" className="w-full h-auto rounded-lg" />
+                  </div>
+                </div>
+              </div>
 
               <h2 className={`text-xl font-semibold mt-8 mb-3 ${
                 theme === 'night' ? 'text-white' : 'text-gray-800'
@@ -553,6 +655,25 @@ export default function AboutPage() {
                 }`}>
                   © melty haeon 2025
                 </p>
+
+                {/* Ko-fi Support Button */}
+                <div className="flex justify-center mt-4">
+                  <a
+                    href="https://ko-fi.com/yuyukit"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all hover:scale-105 ${
+                      theme === 'night'
+                        ? 'bg-[#FF5E5B] hover:bg-[#ff4744] text-white'
+                        : 'bg-[#FF5E5B] hover:bg-[#ff4744] text-white'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M23.881 8.948c-.773-4.085-4.859-4.593-4.859-4.593H.723c-.604 0-.679.798-.679.798s-.082 7.324-.022 11.822c.164 2.424 2.586 2.672 2.586 2.672s8.267-.023 11.966-.049c2.438-.426 2.683-2.566 2.658-3.734 4.352.24 7.422-2.831 6.649-6.916zm-11.062 3.511c-1.246 1.453-4.011 3.976-4.011 3.976s-.121.119-.31.023c-.076-.057-.108-.09-.108-.09-.443-.441-3.368-3.049-4.034-3.954-.709-.965-1.041-2.7-.091-3.71.951-1.01 3.005-1.086 4.363.407 0 0 1.565-1.782 3.468-.963 1.904.82 1.832 3.011.723 4.311z"/>
+                    </svg>
+                    Support on Ko-fi
+                  </a>
+                </div>
               </div>
             </div>
             </div>

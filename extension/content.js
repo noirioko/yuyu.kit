@@ -16,12 +16,14 @@ function extractAssetData() {
     creator: ''
   };
 
-  // Detect platform (ACON3D and CSP only)
+  // Detect platform
   const hostname = window.location.hostname;
   if (hostname.includes('acon3d')) {
     data.platform = 'ACON3D';
   } else if (hostname.includes('clip-studio')) {
     data.platform = 'CSP Asset';
+  } else if (hostname.includes('amazon')) {
+    data.platform = 'Amazon';
   }
 
   console.log('🏷️ Platform detected:', data.platform);
@@ -72,6 +74,70 @@ function extractAssetData() {
           data.currency = 'Gold';
           console.log('✅ CSP GOLD price:', data.price);
         }
+      }
+    }
+  }
+
+  // AMAZON-SPECIFIC EXTRACTION
+  if (data.platform === 'Amazon') {
+    console.log('🛒 Using Amazon-specific extraction...');
+
+    // Amazon Title: #productTitle
+    const amazonTitle = document.querySelector('#productTitle');
+    if (amazonTitle) {
+      data.title = amazonTitle.textContent.trim();
+      console.log('✅ Found Amazon title:', data.title);
+    }
+
+    // Amazon Image: #imgTagWrapperId img or #landingImage
+    const amazonImgWrapper = document.querySelector('#imgTagWrapperId img');
+    const amazonLandingImg = document.querySelector('#landingImage');
+    const amazonMainImg = document.querySelector('#imgBlkFront');
+
+    if (amazonImgWrapper && amazonImgWrapper.src) {
+      data.thumbnailUrl = amazonImgWrapper.src;
+      console.log('✅ Found Amazon image from #imgTagWrapperId:', data.thumbnailUrl);
+    } else if (amazonLandingImg && amazonLandingImg.src) {
+      data.thumbnailUrl = amazonLandingImg.src;
+      console.log('✅ Found Amazon image from #landingImage:', data.thumbnailUrl);
+    } else if (amazonMainImg && amazonMainImg.src) {
+      data.thumbnailUrl = amazonMainImg.src;
+      console.log('✅ Found Amazon image from #imgBlkFront:', data.thumbnailUrl);
+    }
+
+    // Amazon Price: .a-price .a-offscreen or #priceblock_ourprice
+    const amazonPrice = document.querySelector('.a-price .a-offscreen');
+    const amazonPriceAlt = document.querySelector('#priceblock_ourprice, #priceblock_dealprice, .a-price-whole');
+
+    if (amazonPrice) {
+      const priceText = amazonPrice.textContent.trim();
+      const match = priceText.match(/([\d,]+\.?\d*)/);
+      if (match) {
+        data.price = parseFloat(match[1].replace(/,/g, ''));
+        if (priceText.includes('$')) data.currency = '$';
+        else if (priceText.includes('¥')) data.currency = '¥';
+        else if (priceText.includes('€')) data.currency = '€';
+        else if (priceText.includes('£')) data.currency = '£';
+        console.log('✅ Found Amazon price:', data.price, data.currency);
+      }
+    } else if (amazonPriceAlt) {
+      const priceText = amazonPriceAlt.textContent.trim();
+      const match = priceText.match(/([\d,]+\.?\d*)/);
+      if (match) {
+        data.price = parseFloat(match[1].replace(/,/g, ''));
+        console.log('✅ Found Amazon price (alt):', data.price);
+      }
+    }
+
+    // Amazon Brand/Seller: #bylineInfo or .a-link-normal[href*="/stores/"]
+    const amazonBrand = document.querySelector('#bylineInfo');
+    if (amazonBrand) {
+      let brandText = amazonBrand.textContent.trim();
+      // Clean up "Visit the X Store" or "Brand: X"
+      brandText = brandText.replace(/^(Visit the |Brand:\s*)/i, '').replace(/\s*Store$/i, '');
+      if (brandText.length >= 2 && brandText.length <= 50) {
+        data.creator = brandText;
+        console.log('✅ Found Amazon brand:', data.creator);
       }
     }
   }
@@ -662,9 +728,16 @@ function isAssetPage() {
     return isDetailPage;
   }
 
-  // Only ACON3D and CSP are supported - don't show button on other sites
-  console.log('⚠️ Unsupported platform - MyPebbles only supports ACON3D and CSP Asset');
-  return false;
+  // Amazon: Must be /dp/ or /gp/product/
+  if (hostname.includes('amazon')) {
+    const isProductPage = /\/(dp|gp\/product)\/[A-Z0-9]+/i.test(url);
+    console.log('✅ Amazon product page:', isProductPage);
+    return isProductPage;
+  }
+
+  // Other sites - show button on any page for now
+  console.log('⚠️ Unknown platform - allowing button');
+  return true;
 }
 
 // Create and inject the floating button
