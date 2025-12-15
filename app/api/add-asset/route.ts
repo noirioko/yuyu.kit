@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, Timestamp, doc, updateDoc, increment } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, doc, updateDoc, increment, query, where, getDocs, getDoc } from 'firebase/firestore';
+
+// Free tier limits
+const FREE_LIMITS = {
+  maxAssets: 50,
+  maxProjects: 3,
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +42,34 @@ export async function POST(request: NextRequest) {
           'Access-Control-Allow-Headers': 'Content-Type',
         }
       });
+    }
+
+    // Check subscription status and limits
+    const userRef = doc(db, 'users', userId);
+    const userSnap = await getDoc(userRef);
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    const isPremium = userData.subscription === 'premium';
+
+    if (!isPremium) {
+      // Count user's current assets
+      const assetsQuery = query(collection(db, 'assets'), where('userId', '==', userId));
+      const assetsSnap = await getDocs(assetsQuery);
+      const currentAssetCount = assetsSnap.size;
+
+      if (currentAssetCount >= FREE_LIMITS.maxAssets) {
+        return NextResponse.json({
+          success: false,
+          error: `Asset limit reached! Free accounts can save up to ${FREE_LIMITS.maxAssets} assets. Upgrade to Premium for unlimited assets.`,
+          limitReached: true,
+        }, {
+          status: 403,
+          headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+          }
+        });
+      }
     }
 
     const now = Timestamp.now();

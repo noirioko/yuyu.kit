@@ -59,6 +59,11 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const assetsPerPage = 50;
 
+  // Subscription state
+  const [isPremium, setIsPremium] = useState(false);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(true);
+  const FREE_LIMITS = { maxAssets: 50, maxProjects: 3 };
+
   // Click outside to close notifications
   useEffect(() => {
     if (!showNotifications) return;
@@ -111,6 +116,26 @@ export default function Dashboard() {
 
     localStorage.setItem(`notifications_${user.uid}`, JSON.stringify(notifications));
   }, [notifications, user]);
+
+  // Fetch subscription status
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchSubscription = async () => {
+      try {
+        const response = await fetch(`/api/subscription?userId=${user.uid}`);
+        const data = await response.json();
+        setIsPremium(data.isPremium || false);
+      } catch (error) {
+        console.error('Failed to fetch subscription:', error);
+        setIsPremium(false);
+      } finally {
+        setSubscriptionLoading(false);
+      }
+    };
+
+    fetchSubscription();
+  }, [user]);
 
   // Load user data
   useEffect(() => {
@@ -683,12 +708,12 @@ export default function Dashboard() {
         <div className="flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6">
           {/* Sidebar - Hidden on mobile, shown as slide-out drawer */}
           <aside className={`
-            fixed md:sticky top-0 left-0 h-full md:h-fit md:top-4 w-72 md:w-auto
-            md:col-span-3 z-[450] md:z-auto md:self-start
+            fixed md:sticky top-0 left-0 h-full md:h-[calc(100vh-6rem)] md:top-20 w-72 md:w-auto
+            md:col-span-3 z-[450] md:z-auto
             transform transition-transform duration-300 ease-in-out
             ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}>
-            <div className={`h-full md:max-h-[calc(100vh-2rem)] rounded-none md:rounded-xl shadow-sm p-6 pt-20 md:pt-6 transition-all overflow-y-auto ${
+            <div className={`h-full rounded-none md:rounded-xl shadow-sm p-6 pt-20 md:pt-6 transition-all overflow-y-auto ${
               theme === 'night'
                 ? 'bg-[#0a1c3d] md:bg-white/5 backdrop-blur-lg border-r md:border border-white/10'
                 : 'bg-white border-r md:border-none border-gray-200'
@@ -794,10 +819,32 @@ export default function Dashboard() {
                     <h3 className={`text-sm font-semibold ${
                       theme === 'night' ? 'text-white' : 'text-gray-700'
                     }`}>PROJECTS</h3>
+                    {!isPremium && !subscriptionLoading && (
+                      <span className={`text-xs ${
+                        projects.length >= FREE_LIMITS.maxProjects
+                          ? 'text-red-500'
+                          : theme === 'night' ? 'text-white/50' : 'text-gray-400'
+                      }`}>
+                        ({projects.length}/{FREE_LIMITS.maxProjects})
+                      </span>
+                    )}
                   </div>
                   <button
-                    onClick={() => setShowAddProject(true)}
-                    className="text-[#2868c6] hover:text-[#3f3381] text-xl"
+                    onClick={() => {
+                      if (!isPremium && projects.length >= FREE_LIMITS.maxProjects) {
+                        if (confirm(`You've reached the free limit of ${FREE_LIMITS.maxProjects} projects. Upgrade to Premium for unlimited projects?`)) {
+                          router.push('/upgrade');
+                        }
+                      } else {
+                        setShowAddProject(true);
+                      }
+                    }}
+                    className={`text-xl cursor-pointer ${
+                      !isPremium && projects.length >= FREE_LIMITS.maxProjects
+                        ? 'text-gray-400 hover:text-[#2868c6]'
+                        : 'text-[#2868c6] hover:text-[#3f3381]'
+                    }`}
+                    title={!isPremium && projects.length >= FREE_LIMITS.maxProjects ? 'Upgrade to add more projects' : 'Add project'}
                   >
                     +
                   </button>
@@ -992,6 +1039,53 @@ export default function Dashboard() {
                   📋 Copy User ID
                 </button>
               </div>
+
+              {/* Upgrade Banner for Free Users */}
+              {!isPremium && !subscriptionLoading && (
+                <div className={`mt-6 p-4 rounded-xl ${
+                  theme === 'night'
+                    ? 'bg-gradient-to-br from-[#2868c6]/20 to-[#cba2ea]/20 border border-white/10'
+                    : 'bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20 border border-[#91d2f4]/30'
+                }`}>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-lg">✨</span>
+                    <h4 className={`text-sm font-semibold ${
+                      theme === 'night' ? 'text-white' : 'text-gray-800'
+                    }`}>Free Plan</h4>
+                  </div>
+                  <div className={`text-xs space-y-1 mb-3 ${
+                    theme === 'night' ? 'text-white/70' : 'text-gray-600'
+                  }`}>
+                    <p>Assets: <span className={assets.length >= FREE_LIMITS.maxAssets ? 'text-red-500 font-semibold' : ''}>{assets.length}/{FREE_LIMITS.maxAssets}</span></p>
+                    <p>Projects: <span className={projects.length >= FREE_LIMITS.maxProjects ? 'text-red-500 font-semibold' : ''}>{projects.length}/{FREE_LIMITS.maxProjects}</span></p>
+                  </div>
+                  <button
+                    onClick={() => router.push('/upgrade')}
+                    className="w-full py-2 text-xs font-semibold text-white bg-gradient-to-r from-[#2868c6] to-[#cba2ea] rounded-lg hover:opacity-90 transition cursor-pointer"
+                  >
+                    Upgrade to Premium
+                  </button>
+                </div>
+              )}
+
+              {/* Premium Badge */}
+              {isPremium && !subscriptionLoading && (
+                <div className={`mt-6 p-4 rounded-xl ${
+                  theme === 'night'
+                    ? 'bg-gradient-to-br from-[#2868c6]/20 to-[#cba2ea]/20 border border-white/10'
+                    : 'bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20 border border-[#91d2f4]/30'
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">👑</span>
+                    <h4 className={`text-sm font-semibold ${
+                      theme === 'night' ? 'text-white' : 'text-gray-800'
+                    }`}>Premium</h4>
+                  </div>
+                  <p className={`text-xs mt-1 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Unlimited assets & projects</p>
+                </div>
+              )}
             </div>
           </aside>
 
