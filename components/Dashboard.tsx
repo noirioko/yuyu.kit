@@ -64,6 +64,17 @@ export default function Dashboard() {
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
   const FREE_LIMITS = { maxAssets: 50, maxProjects: 3 };
 
+  // Collapsible sidebar sections
+  const [collapsedSections, setCollapsedSections] = useState<{view: boolean, projects: boolean, collections: boolean, tools: boolean}>({
+    view: false,
+    projects: false,
+    collections: false,
+    tools: true, // Tools collapsed by default
+  });
+  const toggleSection = (section: 'view' | 'projects' | 'collections' | 'tools') => {
+    setCollapsedSections(prev => ({ ...prev, [section]: !prev[section] }));
+  };
+
   // Click outside to close notifications
   useEffect(() => {
     if (!showNotifications) return;
@@ -568,11 +579,16 @@ export default function Dashboard() {
                   }}
                   className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer"
                 >
-                  <img
-                    src={user?.photoURL || ''}
-                    alt={user?.displayName || ''}
-                    className="w-10 h-10 rounded-full"
-                  />
+                  <div className="relative">
+                    <img
+                      src={user?.photoURL || ''}
+                      alt={user?.displayName || ''}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    {isPremium && !subscriptionLoading && (
+                      <span className="absolute -top-1 -right-1 text-sm drop-shadow-md">👑</span>
+                    )}
+                  </div>
                   <svg className={`w-4 h-4 ${theme === 'night' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
@@ -596,6 +612,23 @@ export default function Dashboard() {
                       <p className={`text-sm font-semibold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>{user?.displayName}</p>
                       <p className={`text-xs ${theme === 'night' ? 'text-white/60' : 'text-gray-500'}`}>{user?.email}</p>
                     </div>
+
+                    <button
+                      onClick={() => {
+                        router.push('/profile');
+                        setShowProfileMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
+                        theme === 'night'
+                          ? 'text-white hover:bg-white/10'
+                          : 'text-gray-700 hover:bg-[#91d2f4]/20'
+                      }`}
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                      <span>Profile</span>
+                    </button>
 
                     <button
                       onClick={() => {
@@ -704,7 +737,7 @@ export default function Dashboard() {
       )}
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
+      <div className="container mx-auto px-2 md:px-4 py-4 md:py-6">
         <div className="flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6">
           {/* Sidebar - Hidden on mobile, shown as slide-out drawer */}
           <aside className={`
@@ -713,7 +746,7 @@ export default function Dashboard() {
             transform transition-transform duration-300 ease-in-out
             ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           `}>
-            <div className={`h-full rounded-none md:rounded-xl shadow-sm p-6 pt-20 md:pt-6 transition-all overflow-y-auto ${
+            <div className={`h-full rounded-none md:rounded-xl shadow-sm pt-20 md:pt-0 transition-all flex flex-col ${
               theme === 'night'
                 ? 'bg-[#0a1c3d] md:bg-white/5 backdrop-blur-lg border-r md:border border-white/10'
                 : 'bg-white border-r md:border-none border-gray-200'
@@ -729,9 +762,20 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+
+              {/* Scrollable content area */}
+              <div className="flex-1 overflow-y-auto p-6 md:pt-6">
               {/* View Filters */}
-              <div className="mb-6">
-                <div className="flex items-center gap-2 mb-3">
+              <div className="mb-4">
+                <button
+                  onClick={() => toggleSection('view')}
+                  className="flex items-center gap-2 mb-2 w-full cursor-pointer group"
+                >
+                  <svg className={`w-3 h-3 transition-transform ${collapsedSections.view ? '-rotate-90' : ''} ${
+                    theme === 'night' ? 'text-white/50' : 'text-gray-400'
+                  }`} fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
                   <svg className="w-4 h-4 flex-shrink-0 text-[#91d2f4]" fill="currentColor" viewBox="0 0 24 24">
                     <circle cx="7" cy="7" r="3"/>
                     <circle cx="17" cy="7" r="2.5"/>
@@ -742,8 +786,8 @@ export default function Dashboard() {
                   <h3 className={`text-sm font-semibold ${
                     theme === 'night' ? 'text-white' : 'text-gray-700'
                   }`}>VIEW</h3>
-                </div>
-                <div className="space-y-2">
+                </button>
+                {!collapsedSections.view && <div className="space-y-1 ml-5">
                   <button
                     onClick={() => { setView('all'); setSelectedProject(null); setSelectedCollection(null); setMobileMenuOpen(false); }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
@@ -806,13 +850,21 @@ export default function Dashboard() {
                     </svg>
                     Purchased ({assets.filter(a => a.status === 'bought').length})
                   </button>
-                </div>
+                </div>}
               </div>
 
               {/* Projects */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <button
+                    onClick={() => toggleSection('projects')}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <svg className={`w-3 h-3 transition-transform ${collapsedSections.projects ? '-rotate-90' : ''} ${
+                      theme === 'night' ? 'text-white/50' : 'text-gray-400'
+                    }`} fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
                     <svg className="w-4 h-4 flex-shrink-0 text-[#2868c6]" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
                     </svg>
@@ -828,9 +880,10 @@ export default function Dashboard() {
                         ({projects.length}/{FREE_LIMITS.maxProjects})
                       </span>
                     )}
-                  </div>
+                  </button>
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       if (!isPremium && projects.length >= FREE_LIMITS.maxProjects) {
                         if (confirm(`You've reached the free limit of ${FREE_LIMITS.maxProjects} projects. Upgrade to Premium for unlimited projects?`)) {
                           router.push('/upgrade');
@@ -849,7 +902,7 @@ export default function Dashboard() {
                     +
                   </button>
                 </div>
-                <div className="space-y-2">
+                {!collapsedSections.projects && <div className="space-y-1 ml-5">
                   {projects.map(project => {
                     const projectColor = project.color || getColorFromString(project.name);
                     return (
@@ -909,28 +962,39 @@ export default function Dashboard() {
                       </button>
                     );
                   })}
-                </div>
+                </div>}
               </div>
 
               {/* Collections */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
+              <div className="mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <button
+                    onClick={() => toggleSection('collections')}
+                    className="flex items-center gap-2 cursor-pointer"
+                  >
+                    <svg className={`w-3 h-3 transition-transform ${collapsedSections.collections ? '-rotate-90' : ''} ${
+                      theme === 'night' ? 'text-white/50' : 'text-gray-400'
+                    }`} fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
                     <svg className="w-4 h-4 flex-shrink-0 text-[#cba2ea]" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M2 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H3a1 1 0 01-1-1V4zM8 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1H9a1 1 0 01-1-1V4zM15 3a1 1 0 00-1 1v12a1 1 0 001 1h2a1 1 0 001-1V4a1 1 0 00-1-1h-2z" />
                     </svg>
                     <h3 className={`text-sm font-semibold ${
                       theme === 'night' ? 'text-white' : 'text-gray-700'
                     }`}>COLLECTIONS</h3>
-                  </div>
+                  </button>
                   <button
-                    onClick={() => setShowAddCollection(true)}
-                    className="text-[#2868c6] hover:text-[#3f3381] text-xl"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAddCollection(true);
+                    }}
+                    className="text-[#2868c6] hover:text-[#3f3381] text-xl cursor-pointer"
                   >
                     +
                   </button>
                 </div>
-                <div className="space-y-2">
+                {!collapsedSections.collections && <div className="space-y-1 ml-5">
                   {collections.map(collection => {
                     const collectionColor = collection.color || getColorFromString(collection.name);
                     return (
@@ -990,11 +1054,16 @@ export default function Dashboard() {
                       </button>
                     );
                   })}
-                </div>
+                </div>}
               </div>
+              </div>
+              {/* End scrollable content area */}
 
-              {/* Browse by Tags */}
-              <div>
+              {/* Pinned bottom section */}
+              <div className={`p-4 border-t flex-shrink-0 ${
+                theme === 'night' ? 'border-white/10' : 'border-gray-100'
+              }`}>
+                {/* Browse by Tags */}
                 <button
                   onClick={() => {
                     router.push('/tags');
@@ -1009,10 +1078,9 @@ export default function Dashboard() {
                   <span>🏷️</span>
                   <span>Browse by Tags</span>
                 </button>
-              </div>
 
               {/* Mobile-only utility buttons */}
-              <div className="md:hidden mt-6 pt-6 border-t border-white/10 space-y-2">
+              <div className="md:hidden mt-4 pt-4 border-t border-white/10 space-y-2">
                 <button
                   onClick={() => {
                     handleAutoTagAll();
@@ -1040,52 +1108,22 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              {/* Upgrade Banner for Free Users */}
+              {/* Compact Upgrade Banner for Free Users */}
               {!isPremium && !subscriptionLoading && (
-                <div className={`mt-6 p-4 rounded-xl ${
-                  theme === 'night'
-                    ? 'bg-gradient-to-br from-[#2868c6]/20 to-[#cba2ea]/20 border border-white/10'
-                    : 'bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20 border border-[#91d2f4]/30'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-lg">✨</span>
-                    <h4 className={`text-sm font-semibold ${
-                      theme === 'night' ? 'text-white' : 'text-gray-800'
-                    }`}>Free Plan</h4>
-                  </div>
-                  <div className={`text-xs space-y-1 mb-3 ${
-                    theme === 'night' ? 'text-white/70' : 'text-gray-600'
-                  }`}>
-                    <p>Assets: <span className={assets.length >= FREE_LIMITS.maxAssets ? 'text-red-500 font-semibold' : ''}>{assets.length}/{FREE_LIMITS.maxAssets}</span></p>
-                    <p>Projects: <span className={projects.length >= FREE_LIMITS.maxProjects ? 'text-red-500 font-semibold' : ''}>{projects.length}/{FREE_LIMITS.maxProjects}</span></p>
-                  </div>
-                  <button
-                    onClick={() => router.push('/upgrade')}
-                    className="w-full py-2 text-xs font-semibold text-white bg-gradient-to-r from-[#2868c6] to-[#cba2ea] rounded-lg hover:opacity-90 transition cursor-pointer"
-                  >
-                    Upgrade to Premium
-                  </button>
-                </div>
+                <button
+                  onClick={() => router.push('/upgrade')}
+                  className={`mt-4 w-full py-2 px-3 rounded-lg text-xs font-medium transition flex items-center justify-center gap-2 cursor-pointer ${
+                    theme === 'night'
+                      ? 'bg-gradient-to-r from-[#2868c6]/30 to-[#cba2ea]/30 text-white hover:from-[#2868c6]/40 hover:to-[#cba2ea]/40'
+                      : 'bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white hover:opacity-90'
+                  }`}
+                >
+                  <span>✨</span>
+                  <span>Upgrade ({assets.length}/{FREE_LIMITS.maxAssets} assets)</span>
+                </button>
               )}
-
-              {/* Premium Badge */}
-              {isPremium && !subscriptionLoading && (
-                <div className={`mt-6 p-4 rounded-xl ${
-                  theme === 'night'
-                    ? 'bg-gradient-to-br from-[#2868c6]/20 to-[#cba2ea]/20 border border-white/10'
-                    : 'bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20 border border-[#91d2f4]/30'
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">👑</span>
-                    <h4 className={`text-sm font-semibold ${
-                      theme === 'night' ? 'text-white' : 'text-gray-800'
-                    }`}>Premium</h4>
-                  </div>
-                  <p className={`text-xs mt-1 ${
-                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
-                  }`}>Unlimited assets & projects</p>
-                </div>
-              )}
+              </div>
+              {/* End pinned bottom section */}
             </div>
           </aside>
 

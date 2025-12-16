@@ -97,19 +97,19 @@ export default function LandingPage() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                Free forever • No credit card required
+                Free tier available • No credit card required to start
               </div>
             </div>
 
             {/* Stats */}
-            <div className="flex gap-16 pt-8 border-t border-gray-200">
+            <div className="flex gap-8 md:gap-16 pt-8 border-t border-gray-200">
               <div>
-                <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">Free</div>
-                <div className="text-sm text-gray-500">No credit card</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">50</div>
+                <div className="text-sm text-gray-500">Free assets</div>
               </div>
               <div>
-                <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">Unlimited</div>
-                <div className="text-sm text-gray-500">Assets tracked</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">$9.99</div>
+                <div className="text-sm text-gray-500">Lifetime unlimited</div>
               </div>
               <div>
                 <div className="text-3xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">Organized</div>
@@ -174,6 +174,107 @@ export default function LandingPage() {
             </div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">Tag Everything</h3>
             <p className="text-gray-600 leading-relaxed">Tag assets by platform, creator, or custom categories for quick filtering.</p>
+          </div>
+        </div>
+
+        {/* Pricing */}
+        <div className="mt-32 max-w-4xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">
+            Simple Pricing
+          </h2>
+          <p className="text-center text-gray-600 mb-12">Start free, upgrade when you need more</p>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Free Tier */}
+            <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-200 hover:shadow-lg transition-all">
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
+                <div className="text-4xl font-bold text-gray-900">$0</div>
+                <p className="text-gray-500 mt-1">Forever free</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Up to 50 assets
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Up to 3 projects
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Unlimited collections
+                </li>
+                <li className="flex items-center gap-2 text-gray-600">
+                  <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Browser extension
+                </li>
+              </ul>
+              <button
+                onClick={() => signInWithGoogle()}
+                className="w-full py-3 px-6 border-2 border-[#2868c6] text-[#2868c6] rounded-xl font-semibold hover:bg-[#2868c6] hover:text-white transition-all cursor-pointer"
+              >
+                Get Started
+              </button>
+            </div>
+
+            {/* Premium Tier */}
+            <div className="bg-gradient-to-br from-[#2868c6] to-[#cba2ea] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden">
+              <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">
+                BETA DEAL
+              </div>
+              <div className="text-center mb-6">
+                <h3 className="text-2xl font-bold text-white mb-2">Premium</h3>
+                <div className="text-4xl font-bold text-white">$9.99</div>
+                <p className="text-white/80 mt-1">One-time payment</p>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-white">
+                  <svg className="w-5 h-5 text-yellow-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <strong>Unlimited</strong> assets
+                </li>
+                <li className="flex items-center gap-2 text-white">
+                  <svg className="w-5 h-5 text-yellow-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <strong>Unlimited</strong> projects
+                </li>
+                <li className="flex items-center gap-2 text-white">
+                  <svg className="w-5 h-5 text-yellow-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Unlimited collections
+                </li>
+                <li className="flex items-center gap-2 text-white">
+                  <svg className="w-5 h-5 text-yellow-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Lifetime access
+                </li>
+                <li className="flex items-center gap-2 text-white">
+                  <svg className="w-5 h-5 text-yellow-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Support development 💜
+                </li>
+              </ul>
+              <button
+                onClick={() => signInWithGoogle()}
+                className="w-full py-3 px-6 bg-white text-[#2868c6] rounded-xl font-semibold hover:bg-gray-100 transition-all cursor-pointer"
+              >
+                Get Premium
+              </button>
+            </div>
           </div>
         </div>
 

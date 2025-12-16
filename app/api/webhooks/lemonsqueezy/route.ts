@@ -32,11 +32,18 @@ export async function POST(request: NextRequest) {
     const eventName = event.meta?.event_name;
 
     console.log('📬 LemonSqueezy webhook received:', eventName);
+    console.log('📦 Event data:', JSON.stringify(event, null, 2));
+
+    const customData = event.meta?.custom_data;
+    const userId = customData?.user_id;
+
+    if (!db) {
+      console.error('Database not initialized');
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    }
 
     // Handle order_created event (for one-time/lifetime purchases)
     if (eventName === 'order_created') {
-      const customData = event.meta?.custom_data;
-      const userId = customData?.user_id;
       const customerEmail = event.data?.attributes?.user_email;
       const orderId = event.data?.id;
 
@@ -45,19 +52,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
       }
 
-      if (!db) {
-        console.error('Database not initialized');
-        return NextResponse.json({ error: 'Database error' }, { status: 500 });
-      }
+      console.log('🎉 Processing lifetime purchase for user:', userId);
 
-      console.log('🎉 Processing purchase for user:', userId);
-
-      // Get existing user data if it exists
       const userRef = doc(db, 'users', userId);
       const userSnap = await getDoc(userRef);
       const existingData = userSnap.exists() ? userSnap.data() : {};
 
-      // Update user document with premium status
       await setDoc(userRef, {
         ...existingData,
         subscription: 'premium',
@@ -68,7 +68,124 @@ export async function POST(request: NextRequest) {
         updatedAt: Timestamp.now(),
       }, { merge: true });
 
-      console.log('✅ User upgraded to premium:', userId);
+      console.log('✅ User upgraded to lifetime premium:', userId);
+    }
+
+    // Handle subscription_created event (for monthly/yearly subscriptions)
+    if (eventName === 'subscription_created') {
+      const customerEmail = event.data?.attributes?.user_email;
+      const subscriptionId = event.data?.id;
+      const status = event.data?.attributes?.status; // active, cancelled, expired, etc.
+      const renewsAt = event.data?.attributes?.renews_at;
+      const endsAt = event.data?.attributes?.ends_at;
+
+      if (!userId) {
+        console.error('No user_id in webhook custom data');
+        return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
+      }
+
+      console.log('🎉 Processing subscription for user:', userId, 'Status:', status);
+
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      const existingData = userSnap.exists() ? userSnap.data() : {};
+
+      await setDoc(userRef, {
+        ...existingData,
+        subscription: status === 'active' ? 'premium' : 'free',
+        subscriptionType: 'subscription',
+        subscriptionStatus: status,
+        subscriptionId: subscriptionId || '',
+        renewsAt: renewsAt || null,
+        endsAt: endsAt || null,
+        customerEmail: customerEmail || existingData.customerEmail || '',
+        updatedAt: Timestamp.now(),
+      }, { merge: true });
+
+      console.log('✅ Subscription created for user:', userId);
+    }
+
+    // Handle subscription_updated event (status changes, renewals, etc.)
+    if (eventName === 'subscription_updated') {
+      const subscriptionId = event.data?.id;
+      const status = event.data?.attributes?.status;
+      const renewsAt = event.data?.attributes?.renews_at;
+      const endsAt = event.data?.attributes?.ends_at;
+
+      // Find user by subscription ID if userId not in custom data
+      let targetUserId = userId;
+
+      if (!targetUserId && subscriptionId) {
+        // We'd need to query Firebase to find the user with this subscriptionId
+        // For now, log a warning
+        console.warn('No user_id in custom data, subscription_id:', subscriptionId);
+      }
+
+      if (targetUserId) {
+        console.log('🔄 Updating subscription for user:', targetUserId, 'Status:', status);
+
+        const userRef = doc(db, 'users', targetUserId);
+        const userSnap = await getDoc(userRef);
+        const existingData = userSnap.exists() ? userSnap.data() : {};
+
+        // Only downgrade if subscription is truly inactive
+        const isPremium = status === 'active' || status === 'on_trial';
+
+        await setDoc(userRef, {
+          ...existingData,
+          subscription: isPremium ? 'premium' : 'free',
+          subscriptionStatus: status,
+          renewsAt: renewsAt || null,
+          endsAt: endsAt || null,
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+
+        console.log('✅ Subscription updated for user:', targetUserId, 'Premium:', isPremium);
+      }
+    }
+
+    // Handle subscription_cancelled event
+    if (eventName === 'subscription_cancelled') {
+      const subscriptionId = event.data?.id;
+      const endsAt = event.data?.attributes?.ends_at; // They still have access until this date
+
+      if (userId) {
+        console.log('❌ Subscription cancelled for user:', userId, 'Ends at:', endsAt);
+
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        const existingData = userSnap.exists() ? userSnap.data() : {};
+
+        await setDoc(userRef, {
+          ...existingData,
+          subscriptionStatus: 'cancelled',
+          endsAt: endsAt || null, // User keeps access until this date
+          cancelledAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+
+        console.log('✅ Marked subscription as cancelled, access until:', endsAt);
+      }
+    }
+
+    // Handle subscription_expired event (access should be revoked)
+    if (eventName === 'subscription_expired') {
+      if (userId) {
+        console.log('⏰ Subscription expired for user:', userId);
+
+        const userRef = doc(db, 'users', userId);
+        const userSnap = await getDoc(userRef);
+        const existingData = userSnap.exists() ? userSnap.data() : {};
+
+        await setDoc(userRef, {
+          ...existingData,
+          subscription: 'free',
+          subscriptionStatus: 'expired',
+          updatedAt: Timestamp.now(),
+        }, { merge: true });
+
+        console.log('✅ User downgraded to free:', userId);
+      }
     }
 
     return NextResponse.json({ received: true });

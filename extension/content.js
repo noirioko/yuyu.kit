@@ -129,9 +129,18 @@ function extractAssetData() {
       }
     }
 
-    // Amazon Brand/Seller: #bylineInfo or .a-link-normal[href*="/stores/"]
+    // Amazon Brand/Seller: #bylineInfo or .author.notFaded (for amazon.co.jp)
     const amazonBrand = document.querySelector('#bylineInfo');
-    if (amazonBrand) {
+    const amazonAuthorJP = document.querySelector('.author.notFaded a, .author.notFaded');
+
+    if (amazonAuthorJP) {
+      // Japanese Amazon author (books, etc.)
+      let authorText = amazonAuthorJP.textContent.trim();
+      if (authorText.length >= 1 && authorText.length <= 100) {
+        data.creator = authorText;
+        console.log('✅ Found Amazon.co.jp author:', data.creator);
+      }
+    } else if (amazonBrand) {
       let brandText = amazonBrand.textContent.trim();
       // Clean up "Visit the X Store" or "Brand: X"
       brandText = brandText.replace(/^(Visit the |Brand:\s*)/i, '').replace(/\s*Store$/i, '');

@@ -551,7 +551,13 @@ export default function PrivacyPage() {
                 <p className={`mb-4 ${
                   theme === 'night' ? 'text-white/70' : 'text-gray-600'
                 }`}>
-                  Questions about this privacy policy? You can reach out via GitHub or the contact information on the About page.
+                  Questions about this privacy policy? Reach out at{' '}
+                  <a
+                    href="mailto:support@pebblz.xyz"
+                    className="text-[#2868c6] hover:underline"
+                  >
+                    support@pebblz.xyz
+                  </a>
                 </p>
 
                 <div className={`rounded-xl p-6 mt-8 ${

@@ -46,8 +46,12 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       subscription,
-      subscriptionType: userData.subscriptionType || null,
+      subscriptionType: userData.subscriptionType || null, // 'lifetime' or 'subscription'
+      subscriptionStatus: userData.subscriptionStatus || null, // 'active', 'cancelled', 'expired', etc.
       purchaseDate: userData.purchaseDate?.toDate?.() || null,
+      renewsAt: userData.renewsAt || null,
+      endsAt: userData.endsAt || null,
+      cancelledAt: userData.cancelledAt?.toDate?.() || null,
       limits: isPremium ? null : FREE_LIMITS,
       isPremium,
     });
