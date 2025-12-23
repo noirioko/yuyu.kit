@@ -209,6 +209,48 @@
     input:checked + .toggle-slider:before {
       transform: translateX(24px);
     }
+
+    /* Duplicate Warning */
+    .duplicate-warning {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffe5b4 100%);
+      border: 2px solid #ffc107;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 16px;
+      text-align: center;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    .duplicate-warning .warning-icon {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    .duplicate-warning .warning-title {
+      font-weight: 700;
+      color: #856404;
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+
+    .duplicate-warning .warning-text {
+      font-size: 12px;
+      color: #856404;
+      opacity: 0.9;
+    }
+
+    .duplicate-warning .warning-asset {
+      font-weight: 600;
+      color: #664d03;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+      20%, 40%, 60%, 80% { transform: translateX(4px); }
+    }
   </style>
 </head>
 <body>

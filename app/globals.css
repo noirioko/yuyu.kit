@@ -169,3 +169,84 @@ body {
 .notification-dropdown {
   animation: slideDown 0.2s ease-out;
 }
+
+/* Gentle bobbing animation for characters */
+@keyframes bob {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+.animate-bob {
+  animation: bob 2s ease-in-out infinite !important;
+}
+
+/* Sparkle animation */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.animate-sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+/* Shiny button animation */
+@keyframes shine {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.shiny-button {
+  background-size: 200% auto;
+  background-image: linear-gradient(
+    90deg,
+    #cba2ea 0%,
+    #e891b9 25%,
+    #f5a0c7 50%,
+    #e891b9 75%,
+    #cba2ea 100%
+  );
+  animation: shine 3s linear infinite;
+}
+
+/* Shiny border animation */
+@keyframes border-shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.shiny-border {
+  position: relative;
+  outline: 4px solid;
+  outline-offset: 0;
+  animation: border-color-cycle 3s linear infinite;
+}
+
+@keyframes border-color-cycle {
+  0% { outline-color: #cba2ea; box-shadow: 0 0 15px #cba2ea, 0 0 30px rgba(203, 162, 234, 0.5); }
+  25% { outline-color: #91d2f4; box-shadow: 0 0 15px #91d2f4, 0 0 30px rgba(145, 210, 244, 0.5); }
+  50% { outline-color: #f5a0c7; box-shadow: 0 0 15px #f5a0c7, 0 0 30px rgba(245, 160, 199, 0.5); }
+  75% { outline-color: #2868c6; box-shadow: 0 0 15px #2868c6, 0 0 30px rgba(40, 104, 198, 0.5); }
+  100% { outline-color: #cba2ea; box-shadow: 0 0 15px #cba2ea, 0 0 30px rgba(203, 162, 234, 0.5); }
+}

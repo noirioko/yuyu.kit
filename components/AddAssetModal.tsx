@@ -26,6 +26,8 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
   const [fetching, setFetching] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [fileLocation, setFileLocation] = useState('');
+  const [isOnSale, setIsOnSale] = useState(false);
+  const [discountPercent, setDiscountPercent] = useState(20);
 
   const handleFetchInfo = async () => {
     if (!url) {
@@ -75,7 +77,11 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
     setLoading(true);
     try {
       const now = Timestamp.now();
-      const priceValue = price ? parseFloat(price) : null;
+      const originalPriceValue = price ? parseFloat(price) : null;
+      // If on sale, calculate the sale price from discount; otherwise use price as current price
+      const currentPriceValue = isOnSale && originalPriceValue
+        ? originalPriceValue * (1 - discountPercent / 100)
+        : originalPriceValue;
 
       await addDoc(collection(db, 'assets'), {
         userId,
@@ -83,7 +89,9 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
         title,
         description,
         thumbnailUrl: thumbnailUrl || null,
-        currentPrice: priceValue,
+        currentPrice: currentPriceValue,
+        originalPrice: isOnSale ? originalPriceValue : null,
+        isOnSale,
         currency,
         platform,
         fileLocation: fileLocation || null,
@@ -91,13 +99,13 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
         collectionId: collectionId || null,
         status,
         tags: [],
-        priceHistory: priceValue ? [{
-          price: priceValue,
+        priceHistory: currentPriceValue ? [{
+          price: currentPriceValue,
           currency,
           checkedAt: now
         }] : [],
-        lowestPrice: priceValue,
-        lastPriceCheck: priceValue ? now : null,
+        lowestPrice: currentPriceValue,
+        lastPriceCheck: currentPriceValue ? now : null,
         createdAt: now,
         updatedAt: now,
       });
@@ -229,6 +237,51 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
               </select>
             </div>
           </div>
+
+          {/* Sale toggle and discount dropdown */}
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isOnSale}
+                onChange={(e) => setIsOnSale(e.target.checked)}
+                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+              />
+              <span className="text-sm font-medium text-gray-700">🏷️ On Sale?</span>
+            </label>
+            {isOnSale && (
+              <>
+                <select
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 text-sm"
+                >
+                  <option value={10}>10% off</option>
+                  <option value={15}>15% off</option>
+                  <option value={20}>20% off</option>
+                  <option value={25}>25% off</option>
+                  <option value={30}>30% off</option>
+                  <option value={40}>40% off</option>
+                  <option value={50}>50% off</option>
+                  <option value={60}>60% off</option>
+                  <option value={70}>70% off</option>
+                  <option value={75}>75% off</option>
+                  <option value={80}>80% off</option>
+                  <option value={90}>90% off</option>
+                </select>
+                {price && (
+                  <span className="text-sm text-green-600 font-medium">
+                    Sale: {currency}{(parseFloat(price) * (1 - discountPercent / 100)).toFixed(2)}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+          {isOnSale && (
+            <p className="text-xs text-gray-500 -mt-2">
+              💡 Price above is the original price. Sale price will be calculated automatically.
+            </p>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

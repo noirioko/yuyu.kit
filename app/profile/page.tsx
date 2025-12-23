@@ -19,7 +19,7 @@ export default function ProfilePage() {
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const [endsAt, setEndsAt] = useState<string | null>(null);
   const [stats, setStats] = useState({ assets: 0, projects: 0, collections: 0 });
-  const FREE_LIMITS = { maxAssets: 50, maxProjects: 3 };
+  const FREE_LIMITS = { maxAssets: 50, maxProjects: 3, maxCollections: 5 };
 
   // Fetch subscription status
   useEffect(() => {

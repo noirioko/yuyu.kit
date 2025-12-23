@@ -178,6 +178,36 @@ export default function TagsPage() {
     return assets.filter(asset => asset.tags?.includes(selectedTag));
   }, [selectedTag, assets]);
 
+  // Delete tag from all assets
+  const handleDeleteTag = async (tagToDelete: string) => {
+    if (!db) return;
+
+    const assetsWithTag = assets.filter(asset => asset.tags?.includes(tagToDelete));
+
+    if (assetsWithTag.length === 0) return;
+
+    const confirmed = confirm(
+      `Remove tag "${tagToDelete}" from ${assetsWithTag.length} asset${assetsWithTag.length > 1 ? 's' : ''}?\n\nThis will remove the tag, not delete the assets.`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      for (const asset of assetsWithTag) {
+        const newTags = asset.tags?.filter(t => t !== tagToDelete) || [];
+        await updateDoc(doc(db, 'assets', asset.id), { tags: newTags });
+      }
+
+      // Clear selection if we deleted the selected tag
+      if (selectedTag === tagToDelete) {
+        setSelectedTag(null);
+      }
+    } catch (error) {
+      console.error('Error deleting tag:', error);
+      alert('Failed to delete tag');
+    }
+  };
+
   // Delete asset handler
   const handleDeleteAsset = async (assetId: string) => {
     if (!db) return;
@@ -453,32 +483,48 @@ export default function TagsPage() {
                   </p>
                 ) : (
                   filteredTags.map(({ tag, count }) => (
-                    <button
-                      key={tag}
-                      onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition ${
-                        selectedTag === tag
-                          ? theme === 'night'
-                            ? 'bg-[#91d2f4]/30 text-white shadow-sm'
-                            : 'bg-[#2868c6] text-white shadow-sm'
-                          : theme === 'night'
-                          ? 'bg-white/10 text-white/80 hover:bg-white/20'
-                          : 'bg-gray-100 text-gray-700 hover:bg-[#91d2f4]/20 hover:text-[#2868c6]'
-                      }`}
-                    >
-                      <span>{tag}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        selectedTag === tag
-                          ? theme === 'night'
-                            ? 'bg-[#2868c6] text-white'
-                            : 'bg-[#3f3381] text-white'
-                          : theme === 'night'
-                          ? 'bg-white/20 text-white/90'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}>
-                        {count}
-                      </span>
-                    </button>
+                    <div key={tag} className="relative group/tag">
+                      <button
+                        onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition ${
+                          selectedTag === tag
+                            ? theme === 'night'
+                              ? 'bg-[#91d2f4]/30 text-white shadow-sm'
+                              : 'bg-[#2868c6] text-white shadow-sm'
+                            : theme === 'night'
+                            ? 'bg-white/10 text-white/80 hover:bg-white/20'
+                            : 'bg-gray-100 text-gray-700 hover:bg-[#91d2f4]/20 hover:text-[#2868c6]'
+                        }`}
+                      >
+                        <span>{tag}</span>
+                        <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                          selectedTag === tag
+                            ? theme === 'night'
+                              ? 'bg-[#2868c6] text-white'
+                              : 'bg-[#3f3381] text-white'
+                            : theme === 'night'
+                            ? 'bg-white/20 text-white/90'
+                            : 'bg-gray-200 text-gray-600'
+                        }`}>
+                          {count}
+                        </span>
+                      </button>
+                      {/* Delete button on hover */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteTag(tag);
+                        }}
+                        className={`absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs opacity-0 group-hover/tag:opacity-100 transition-opacity ${
+                          theme === 'night'
+                            ? 'bg-red-500 text-white hover:bg-red-600'
+                            : 'bg-red-500 text-white hover:bg-red-600'
+                        }`}
+                        title={`Remove "${tag}" from all assets`}
+                      >
+                        ×
+                      </button>
+                    </div>
                   ))
                 )}
               </div>

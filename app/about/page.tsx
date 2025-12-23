@@ -149,11 +149,6 @@ export default function AboutPage() {
     }));
   }, []);
 
-  if (!user) {
-    router.push('/');
-    return null;
-  }
-
   return (
     <div className={`min-h-screen transition-colors ${
       theme === 'night' ? 'bg-[#0a0f1e]' : 'bg-gray-50'
@@ -223,144 +218,123 @@ export default function AboutPage() {
             </div>
 
             <div className="flex items-center gap-4">
-              {/* Profile Dropdown */}
-              <div className="relative">
-                <button
-                  ref={profileButtonRef}
-                  onClick={() => {
-                    if (profileButtonRef.current) {
-                      const rect = profileButtonRef.current.getBoundingClientRect();
-                      setProfileMenuPosition({
-                        top: rect.bottom + 8,
-                        right: window.innerWidth - rect.right
-                      });
-                    }
-                    setShowProfileMenu(!showProfileMenu);
-                  }}
-                  className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer"
-                >
-                  <img
-                    src={user?.photoURL || ''}
-                    alt={user?.displayName || ''}
-                    className="w-10 h-10 rounded-full"
-                  />
-                  <svg className={`w-4 h-4 ${theme === 'night' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-
-                {showProfileMenu && profileMenuPosition && typeof window !== 'undefined' && createPortal(
-                  <div
-                    ref={profileMenuRef}
-                    className={`fixed w-56 rounded-xl shadow-lg border py-2 ${
-                      theme === 'night'
-                        ? 'bg-[#0a1c3d] border-white/20'
-                        : 'bg-white border-gray-200'
-                    }`}
-                    style={{
-                      top: `${profileMenuPosition.top}px`,
-                      right: `${profileMenuPosition.right}px`,
-                      zIndex: 99999
+              {/* Show profile dropdown if logged in, otherwise show sign in button */}
+              {user ? (
+                <div className="relative">
+                  <button
+                    ref={profileButtonRef}
+                    onClick={() => {
+                      if (profileButtonRef.current) {
+                        const rect = profileButtonRef.current.getBoundingClientRect();
+                        setProfileMenuPosition({
+                          top: rect.bottom + 8,
+                          right: window.innerWidth - rect.right
+                        });
+                      }
+                      setShowProfileMenu(!showProfileMenu);
                     }}
+                    className="flex items-center gap-2 hover:opacity-80 transition cursor-pointer"
                   >
-                    <div className={`px-4 py-2 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}>
-                      <p className={`text-sm font-semibold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>{user?.displayName}</p>
-                      <p className={`text-xs ${theme === 'night' ? 'text-white/60' : 'text-gray-500'}`}>{user?.email}</p>
-                    </div>
+                    <img
+                      src={user?.photoURL || ''}
+                      alt={user?.displayName || ''}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <svg className={`w-4 h-4 ${theme === 'night' ? 'text-white' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
 
-                    <button
-                      onClick={() => {
-                        router.push('/overview');
-                        setShowProfileMenu(false);
+                  {showProfileMenu && profileMenuPosition && typeof window !== 'undefined' && createPortal(
+                    <div
+                      ref={profileMenuRef}
+                      className={`fixed w-56 rounded-xl shadow-lg border py-2 ${
+                        theme === 'night'
+                          ? 'bg-[#0a1c3d] border-white/20'
+                          : 'bg-white border-gray-200'
+                      }`}
+                      style={{
+                        top: `${profileMenuPosition.top}px`,
+                        right: `${profileMenuPosition.right}px`,
+                        zIndex: 99999
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
-                        theme === 'night'
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-gray-700 hover:bg-[#91d2f4]/20'
-                      }`}
                     >
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
-                      <span>Overview</span>
-                    </button>
+                      <div className={`px-4 py-2 border-b ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}>
+                        <p className={`text-sm font-semibold ${theme === 'night' ? 'text-white' : 'text-gray-800'}`}>{user?.displayName}</p>
+                        <p className={`text-xs ${theme === 'night' ? 'text-white/60' : 'text-gray-500'}`}>{user?.email}</p>
+                      </div>
 
-                    <button
-                      onClick={() => {
-                        router.push('/tags');
-                        setShowProfileMenu(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
-                        theme === 'night'
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-gray-700 hover:bg-[#91d2f4]/20'
-                      }`}
-                    >
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                      <span>Browse Tags</span>
-                    </button>
-
-                    <button
-                      onClick={toggleTheme}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
-                        theme === 'night'
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-gray-700 hover:bg-[#91d2f4]/20'
-                      }`}
-                    >
-                      {theme === 'night' ? (
+                      <button
+                        onClick={() => {
+                          router.push('/');
+                          setShowProfileMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
+                          theme === 'night'
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-gray-700 hover:bg-[#91d2f4]/20'
+                        }`}
+                      >
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                         </svg>
-                      ) : (
+                        <span>Dashboard</span>
+                      </button>
+
+                      <button
+                        onClick={toggleTheme}
+                        className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
+                          theme === 'night'
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-gray-700 hover:bg-[#91d2f4]/20'
+                        }`}
+                      >
+                        {theme === 'night' ? (
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                          </svg>
+                        )}
+                        <span>{theme === 'night' ? 'Switch to Day Mode' : 'Switch to Night Mode'}</span>
+                      </button>
+
+                      <div className={`border-t my-2 ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}></div>
+
+                      <button
+                        onClick={() => {
+                          signOut();
+                          setShowProfileMenu(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
+                          theme === 'night'
+                            ? 'text-white hover:bg-white/10'
+                            : 'text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
                         <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
-                      )}
-                      <span>{theme === 'night' ? 'Switch to Day Mode' : 'Switch to Night Mode'}</span>
-                    </button>
-
-                    <div className={`border-t my-2 ${theme === 'night' ? 'border-white/10' : 'border-gray-100'}`}></div>
-
-                    <button
-                      onClick={() => {
-                        handleDeleteAllData();
-                        setShowProfileMenu(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
-                        theme === 'night'
-                          ? 'text-red-400 hover:bg-red-400/10'
-                          : 'text-red-600 hover:bg-red-50'
-                      }`}
-                    >
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      <span>Delete All Data</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        signOut();
-                        setShowProfileMenu(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
-                        theme === 'night'
-                          ? 'text-white hover:bg-white/10'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      <span>Sign Out</span>
-                    </button>
-                  </div>,
-                  document.body
-                )}
-              </div>
+                        <span>Sign Out</span>
+                      </button>
+                    </div>,
+                    document.body
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={() => router.push('/')}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    theme === 'night'
+                      ? 'bg-white/10 text-white hover:bg-white/20'
+                      : 'bg-[#2868c6] text-white hover:bg-[#2868c6]/90'
+                  }`}
+                >
+                  Sign In
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -486,8 +460,89 @@ export default function AboutPage() {
                   </div>
                 </div>
               </div>
+            </div>
+            </div>
+          </div>
 
-              <h2 className={`text-xl font-semibold mt-8 mb-3 ${
+          {/* Supported Platforms - Full Width Section */}
+          <div
+            className="relative -mx-8 px-8 py-8 my-8 bg-cover bg-center"
+            style={{ backgroundImage: 'url(/images/kawaii-bg.jpg)' }}
+          >
+            <div className="relative z-10">
+            <h2 className="text-xl font-semibold mb-6 text-[#2d1b69] text-center drop-shadow-sm">Supported Platforms</h2>
+
+            {/* Best Supported */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-[#5a4a7e] mb-3 text-center uppercase tracking-wider">Best Support</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition">
+                  <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    A3D
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69] text-sm">ACON3D</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">3D assets & textures</p>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition">
+                  <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-orange-400 to-pink-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    CSP
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69] text-sm">Clip Studio</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">Brushes & materials</p>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition">
+                  <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    AMZ
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69] text-sm">Amazon</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">Multi-region support</p>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition">
+                  <div className="w-10 h-10 mx-auto mb-2 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                    VG
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69] text-sm">VGen</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">Artist commissions</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Also Works With */}
+            <div>
+              <h3 className="text-sm font-semibold text-[#5a4a7e] mb-3 text-center uppercase tracking-wider">Also Works With</h3>
+              <div className="flex flex-wrap justify-center gap-2">
+                {['Gumroad', 'itch.io', 'Booth.pm', 'Unity Asset Store', 'Sketchfab', 'ArtStation', 'Blender Market', '+ Any website'].map((platform) => (
+                  <span
+                    key={platform}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                      platform === '+ Any website'
+                        ? 'bg-white/90 text-[#2d1b69] border border-[#cba2ea]/50 shadow-sm'
+                        : 'bg-white/70 text-[#4a3a6e]'
+                    }`}
+                  >
+                    {platform}
+                  </span>
+                ))}
+              </div>
+              <p className="text-center text-xs text-[#5a4a7e] mt-3 font-medium">
+                Request a marketplace and we'll add support! (Not for subscription services like Freepik, Adobe Stock, etc.)
+              </p>
+            </div>
+            </div>
+          </div>
+
+          <div className={`rounded-2xl shadow-sm overflow-hidden transition-colors ${
+            theme === 'night'
+              ? 'bg-white/5 backdrop-blur-lg border border-white/10'
+              : 'bg-white'
+          }`}>
+            <div className="p-8">
+            <div className="prose prose-blue max-w-none">
+
+              <h2 className={`text-xl font-semibold mb-3 ${
                 theme === 'night' ? 'text-white' : 'text-gray-800'
               }`}>Our Philosophy</h2>
               <div className={`rounded-xl p-6 mb-6 ${
@@ -629,6 +684,110 @@ export default function AboutPage() {
                 </table>
               </div>
 
+              {/* Projects vs Collections FAQ */}
+              <div className={`rounded-xl p-6 mt-6 ${
+                theme === 'night'
+                  ? 'bg-gradient-to-r from-[#2868c6]/20 to-[#cba2ea]/20 border border-white/10'
+                  : 'bg-gradient-to-r from-blue-50 to-pink-50 border border-gray-200'
+              }`}>
+                <h3 className={`font-semibold mb-3 flex items-center gap-2 ${
+                  theme === 'night' ? 'text-white' : 'text-gray-800'
+                }`}>
+                  <span>🤔</span> What's the difference between Projects and Collections?
+                </h3>
+                <p className={`mb-3 ${
+                  theme === 'night' ? 'text-white/80' : 'text-gray-600'
+                }`}>
+                  Honestly? <strong>Nothing!</strong> They work exactly the same way — just different sidebar menus. 😄
+                </p>
+                <p className={`mb-3 ${
+                  theme === 'night' ? 'text-white/70' : 'text-gray-600'
+                }`}>
+                  We recommend using them like this:
+                </p>
+                <ul className={`list-disc list-inside space-y-2 text-sm ${
+                  theme === 'night' ? 'text-white/70' : 'text-gray-600'
+                }`}>
+                  <li><strong>Projects</strong> — For your webtoon titles, game projects, or any specific creative work you're making</li>
+                  <li><strong>Collections</strong> — For categories like "Brushes", a favorite creator/brand, atmospheres like "Cozy Cafe", or asset types like "Dialogue Bubbles"</li>
+                </ul>
+                <p className={`mt-3 text-sm ${
+                  theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                }`}>
+                  But really, organize however makes sense to you. Have fun! ✨
+                </p>
+              </div>
+
+              <h2 className={`text-xl font-semibold mt-8 mb-3 ${
+                theme === 'night' ? 'text-white' : 'text-gray-800'
+              }`}>🔥 ACON3D Sale Detection</h2>
+              <p className={`mb-4 ${
+                theme === 'night' ? 'text-white/70' : 'text-gray-600'
+              }`}>
+                The extension can check ACON3D's sale page and find which of your wishlist items are currently on sale!
+              </p>
+
+              <div className={`rounded-xl p-4 mb-4 ${
+                theme === 'night'
+                  ? 'bg-[#91d2f4]/10 border border-white/10'
+                  : 'bg-blue-50 border border-blue-200'
+              }`}>
+                <h4 className={`font-semibold mb-2 ${
+                  theme === 'night' ? 'text-white' : 'text-gray-800'
+                }`}>How it works:</h4>
+                <ol className={`list-decimal list-inside space-y-2 text-sm ${
+                  theme === 'night' ? 'text-white/70' : 'text-gray-600'
+                }`}>
+                  <li>Click <strong>"Check ACON Sales"</strong> in the extension popup</li>
+                  <li>The extension opens ACON3D's sale page and reads the items currently on sale</li>
+                  <li>It syncs this list to your MyPebbles account</li>
+                  <li>You're redirected to the Sales page, which compares your wishlist against the sale items</li>
+                  <li>Matching items show up with their discount! 🎉</li>
+                </ol>
+              </div>
+
+              <div className={`rounded-xl p-4 mb-4 ${
+                theme === 'night'
+                  ? 'bg-yellow-500/10 border border-yellow-500/30'
+                  : 'bg-yellow-50 border border-yellow-200'
+              }`}>
+                <h4 className={`font-semibold mb-2 flex items-center gap-2 ${
+                  theme === 'night' ? 'text-yellow-300' : 'text-yellow-700'
+                }`}>
+                  <span>⚠️</span> Why some items might not match:
+                </h4>
+                <ul className={`list-disc list-inside space-y-1 text-sm ${
+                  theme === 'night' ? 'text-white/70' : 'text-gray-600'
+                }`}>
+                  <li><strong>Different titles:</strong> The sale page might show "모던 키친" but you saved "Modern Kitchen"</li>
+                  <li><strong>Title variations:</strong> Extra words like "3D Model" or "Pack" in one but not the other</li>
+                  <li><strong>URL changes:</strong> Product URLs sometimes change over time</li>
+                </ul>
+                <p className={`text-sm mt-3 ${
+                  theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                }`}>
+                  💡 <strong>Tip:</strong> If auto-detection misses an item, you can manually mark it as "On Sale" in the Edit modal. It will appear in the Sales page under your platform!
+                </p>
+              </div>
+
+              <div className={`rounded-xl p-4 mb-6 ${
+                theme === 'night'
+                  ? 'bg-green-500/10 border border-green-500/30'
+                  : 'bg-green-50 border border-green-200'
+              }`}>
+                <h4 className={`font-semibold mb-2 flex items-center gap-2 ${
+                  theme === 'night' ? 'text-green-300' : 'text-green-700'
+                }`}>
+                  <span>✨</span> Multi-page support:
+                </h4>
+                <p className={`text-sm ${
+                  theme === 'night' ? 'text-white/70' : 'text-gray-600'
+                }`}>
+                  The extension automatically reads ALL pages of the ACON3D sale (even when there are 15+ pages!).
+                  It runs in the background so you can keep browsing while it syncs.
+                </p>
+              </div>
+
               <h2 className={`text-xl font-semibold mt-8 mb-3 ${
                 theme === 'night' ? 'text-white' : 'text-gray-800'
               }`}>Privacy & Data</h2>
@@ -655,6 +814,26 @@ export default function AboutPage() {
                 }`}>
                   © melty haeon 2025
                 </p>
+
+                {/* Links */}
+                <div className="flex flex-wrap justify-center gap-4 mt-4 text-sm">
+                  <a
+                    href="/privacy"
+                    className={`hover:underline transition ${
+                      theme === 'night' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    Privacy Policy
+                  </a>
+                  <a
+                    href="mailto:support@pebblz.xyz"
+                    className={`hover:underline transition ${
+                      theme === 'night' ? 'text-white/70 hover:text-white' : 'text-gray-600 hover:text-gray-800'
+                    }`}
+                  >
+                    Contact
+                  </a>
+                </div>
 
                 {/* Ko-fi Support Button */}
                 <div className="flex justify-center mt-4">

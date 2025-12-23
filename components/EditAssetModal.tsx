@@ -16,7 +16,12 @@ export default function EditAssetModal({ asset, projects, collections, onClose }
   const [url, setUrl] = useState(asset.url);
   const [title, setTitle] = useState(asset.title);
   const [description, setDescription] = useState(asset.description || '');
-  const [price, setPrice] = useState(asset.currentPrice ? String(asset.currentPrice) : '');
+  // If on sale, show original price; otherwise show current price
+  const [price, setPrice] = useState(
+    asset.isOnSale && asset.originalPrice
+      ? String(asset.originalPrice)
+      : (asset.currentPrice ? String(asset.currentPrice) : '')
+  );
   const [currency, setCurrency] = useState(asset.currency || '$');
   const [platform, setPlatform] = useState(asset.platform || '');
   const [creator, setCreator] = useState(asset.creator || '');
@@ -31,6 +36,12 @@ export default function EditAssetModal({ asset, projects, collections, onClose }
   const [personalRating, setPersonalRating] = useState(asset.personalRating || 0);
   const [tags, setTags] = useState<string[]>(asset.tags || []);
   const [newTag, setNewTag] = useState('');
+  const [isOnSale, setIsOnSale] = useState(asset.isOnSale || false);
+  // Calculate discount percent from original and current price if available
+  const initialDiscount = asset.isOnSale && asset.originalPrice && asset.currentPrice
+    ? Math.round((1 - asset.currentPrice / asset.originalPrice) * 100)
+    : 20;
+  const [discountPercent, setDiscountPercent] = useState(initialDiscount);
 
   const handleAddTag = () => {
     const trimmedTag = newTag.trim();
@@ -92,21 +103,27 @@ export default function EditAssetModal({ asset, projects, collections, onClose }
     setLoading(true);
     try {
       const now = Timestamp.now();
-      const priceValue = price ? parseFloat(price) : null;
+
+      // Calculate original and current prices first
+      const originalPriceValue = price ? parseFloat(price) : null;
+      // If on sale, calculate the sale price from discount; otherwise use price as current price
+      const currentPriceValue = isOnSale && originalPriceValue
+        ? originalPriceValue * (1 - discountPercent / 100)
+        : originalPriceValue;
 
       // Check if price changed, and update price history if so
       const priceHistory = [...asset.priceHistory];
       let lowestPrice = asset.lowestPrice;
 
-      if (priceValue !== null && priceValue !== asset.currentPrice) {
+      if (currentPriceValue !== null && currentPriceValue !== asset.currentPrice) {
         priceHistory.push({
-          price: priceValue,
+          price: currentPriceValue,
           currency,
           checkedAt: now.toDate()
         });
 
-        if (!lowestPrice || priceValue < lowestPrice) {
-          lowestPrice = priceValue;
+        if (!lowestPrice || currentPriceValue < lowestPrice) {
+          lowestPrice = currentPriceValue;
         }
       }
 
@@ -115,7 +132,9 @@ export default function EditAssetModal({ asset, projects, collections, onClose }
         title,
         description,
         thumbnailUrl: thumbnailUrl || null,
-        currentPrice: priceValue,
+        currentPrice: currentPriceValue,
+        originalPrice: isOnSale ? originalPriceValue : null,
+        isOnSale,
         currency,
         platform,
         creator: creator || '',
@@ -128,7 +147,7 @@ export default function EditAssetModal({ asset, projects, collections, onClose }
         tags,
         priceHistory,
         lowestPrice,
-        lastPriceCheck: priceValue ? now : (asset.lastPriceCheck || null),
+        lastPriceCheck: currentPriceValue ? now : (asset.lastPriceCheck || null),
         updatedAt: now,
       };
 
@@ -296,6 +315,51 @@ export default function EditAssetModal({ asset, projects, collections, onClose }
               </select>
             </div>
           </div>
+
+          {/* Sale toggle and discount dropdown */}
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={isOnSale}
+                onChange={(e) => setIsOnSale(e.target.checked)}
+                className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+              />
+              <span className="text-sm font-medium text-gray-700">🏷️ On Sale?</span>
+            </label>
+            {isOnSale && (
+              <>
+                <select
+                  value={discountPercent}
+                  onChange={(e) => setDiscountPercent(Number(e.target.value))}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 text-sm"
+                >
+                  <option value={10}>10% off</option>
+                  <option value={15}>15% off</option>
+                  <option value={20}>20% off</option>
+                  <option value={25}>25% off</option>
+                  <option value={30}>30% off</option>
+                  <option value={40}>40% off</option>
+                  <option value={50}>50% off</option>
+                  <option value={60}>60% off</option>
+                  <option value={70}>70% off</option>
+                  <option value={75}>75% off</option>
+                  <option value={80}>80% off</option>
+                  <option value={90}>90% off</option>
+                </select>
+                {price && (
+                  <span className="text-sm text-green-600 font-medium">
+                    Sale: {currency}{(parseFloat(price) * (1 - discountPercent / 100)).toFixed(2)}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+          {isOnSale && (
+            <p className="text-xs text-gray-500 -mt-2">
+              💡 Price above is the original price. Sale price will be calculated automatically.
+            </p>
+          )}
 
           <div className="grid grid-cols-2 gap-4">
             <div>

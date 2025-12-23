@@ -38,12 +38,27 @@ async function detectServer() {
 // Detect server on startup
 detectServer();
 
-// Listen for messages from content script (Quick Add button)
+// Listen for messages from content script and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('📥 Background received message:', request.action);
 
+  if (request.action === 'checkAconSales') {
+    (async () => {
+      try {
+        const result = await handleCheckAconSales((progress) => {
+          // Send progress updates to popup
+          chrome.runtime.sendMessage({ action: 'saleProgress', ...progress }).catch(() => {});
+        });
+        sendResponse(result);
+      } catch (error) {
+        console.error('❌ Error checking sales:', error);
+        sendResponse({ success: false, error: error.message });
+      }
+    })();
+    return true;
+  }
+
   if (request.action === 'addAsset') {
-    // Handle async operation
     (async () => {
       try {
         const success = await handleAddAsset(request.data);
@@ -54,11 +69,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ success: false, error: error.message });
       }
     })();
-    return true; // Keep the message channel open for async response
+    return true;
   }
 
   if (request.action === 'bulkAddAssets') {
-    // Handle async operation
     (async () => {
       try {
         const result = await handleBulkAddAssets(request.data);
@@ -210,6 +224,105 @@ async function handleBulkAddAssets(assetsArray) {
   });
 
   return { success: true, count: successCount, failed: failCount };
+}
+
+// Handle ACON sale checking with multi-page support
+async function handleCheckAconSales(sendProgressUpdate) {
+  console.log('🔥 Starting ACON sale check...');
+
+  await detectServer();
+
+  const { apiKey } = await chrome.storage.sync.get(['apiKey']);
+  if (!apiKey) {
+    throw new Error('Please connect your account first');
+  }
+
+  let allSaleItems = [];
+  let currentPage = 1;
+  const maxPages = 20; // Safety limit
+
+  // Open ACON sale page in background
+  const tab = await chrome.tabs.create({
+    url: 'https://acon3d.com/en/event/sale',
+    active: false // Open in background!
+  });
+
+  try {
+    // Wait for tab to load
+    await new Promise(resolve => {
+      const listener = (tabId, info) => {
+        if (tabId === tab.id && info.status === 'complete') {
+          chrome.tabs.onUpdated.removeListener(listener);
+          resolve();
+        }
+      };
+      chrome.tabs.onUpdated.addListener(listener);
+    });
+
+    // Give page time to render
+    await new Promise(resolve => setTimeout(resolve, 3000));
+
+    while (currentPage <= maxPages) {
+      sendProgressUpdate({ page: currentPage, status: 'scraping' });
+      console.log(`📄 Scraping page ${currentPage}...`);
+
+      // Tell content script to scrape current page
+      const result = await chrome.tabs.sendMessage(tab.id, { action: 'scrapeSalePage' });
+
+      if (result && result.items && result.items.length > 0) {
+        allSaleItems = [...allSaleItems, ...result.items];
+        console.log(`✅ Page ${currentPage}: Found ${result.items.length} items (Total: ${allSaleItems.length})`);
+      }
+
+      // Check if there's a next page
+      if (!result || !result.hasNextPage) {
+        console.log('📄 No more pages');
+        break;
+      }
+
+      // Navigate to next page
+      currentPage++;
+      sendProgressUpdate({ page: currentPage, status: 'loading' });
+
+      await chrome.tabs.sendMessage(tab.id, { action: 'goToNextPage' });
+
+      // Wait for navigation
+      await new Promise(resolve => setTimeout(resolve, 3000));
+    }
+
+    // Close the background tab
+    await chrome.tabs.remove(tab.id);
+
+    // Save to Firebase
+    if (allSaleItems.length > 0) {
+      sendProgressUpdate({ status: 'saving', total: allSaleItems.length });
+
+      const response = await fetch(`${YUYU_ASSET_URL}/api/save-sales`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: apiKey,
+          items: allSaleItems,
+          lastUpdated: new Date().toISOString()
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save sales data');
+      }
+    }
+
+    return {
+      success: true,
+      itemCount: allSaleItems.length,
+      pageCount: currentPage
+    };
+
+  } catch (error) {
+    // Make sure to close tab on error
+    try { await chrome.tabs.remove(tab.id); } catch (e) {}
+    throw error;
+  }
 }
 
 console.log('🎨 YuyuAsset background service worker loaded!');

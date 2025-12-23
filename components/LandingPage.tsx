@@ -15,6 +15,16 @@ export default function LandingPage() {
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-[#cba2ea]/40 to-[#91d2f4]/40 rounded-full blur-3xl opacity-30 translate-y-32 -translate-x-32"></div>
       <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20 rounded-full blur-2xl opacity-20"></div>
 
+      {/* Cat-bling peeking menacingly from top right corner */}
+      <div className="absolute -top-16 right-8 w-[320px] h-[320px] z-0 opacity-70 pointer-events-none">
+        <Image
+          src="/images/cat-bling.png"
+          alt=""
+          fill
+          className="object-contain"
+        />
+      </div>
+
       {/* Header */}
       <header className="container mx-auto px-6 py-6 relative z-10">
         <div className="flex items-center justify-between">
@@ -35,17 +45,18 @@ export default function LandingPage() {
       {/* Hero Section */}
       <main className="container mx-auto px-6 py-8 md:py-12 relative z-10">
         <div className="grid md:grid-cols-2 gap-12 items-center max-w-6xl mx-auto relative">
-          {/* Garden Background for Hero Section */}
+          {/* White background to hide cat-bling behind */}
+          <div className="absolute inset-0 -mx-12 -my-8 bg-white rounded-3xl z-[1]" />
+          {/* Garden Background for Hero Section - washed out */}
           <div
-            className="absolute inset-0 -mx-12 -my-8 bg-cover bg-center bg-no-repeat rounded-3xl -z-10"
+            className="absolute inset-0 -mx-12 -my-8 bg-cover bg-center bg-no-repeat rounded-3xl z-[2] opacity-40"
             style={{
               backgroundImage: 'url(/images/landingpage-garden.jpg)',
-              opacity: 0.5
             }}
           />
-          <div className="absolute inset-0 -mx-12 -my-8 bg-white/30 rounded-3xl -z-10" />
+
           {/* Left side - Text content */}
-          <div className="space-y-6">
+          <div className="space-y-6 relative z-[5]">
             <div className="inline-block px-4 py-2 bg-gradient-to-r from-[#91d2f4]/20 to-[#cba2ea]/20 rounded-full">
               <span className="text-sm font-semibold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">
                 ACON3D & CSP Asset Manager
@@ -119,7 +130,7 @@ export default function LandingPage() {
           </div>
 
           {/* Right side - Image */}
-          <div className="relative">
+          <div className="relative z-[5]">
             <div className="relative w-full h-[500px]">
               <Image
                 src="/images/stone-stack.png"
@@ -128,6 +139,15 @@ export default function LandingPage() {
                 className="object-contain drop-shadow-2xl"
                 priority
               />
+              {/* Cat-kyaa bobbing next to stone stack - like they're kissing */}
+              <div className="absolute right-0 bottom-16 w-48 h-48 animate-bob" style={{ animation: 'bob 2s ease-in-out infinite' }}>
+                <Image
+                  src="/images/cat-kyaa.png"
+                  alt=""
+                  fill
+                  className="object-contain"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -176,18 +196,124 @@ export default function LandingPage() {
             <p className="text-gray-600 leading-relaxed">Tag assets by platform, creator, or custom categories for quick filtering.</p>
           </div>
         </div>
+      </main>
 
-        {/* Pricing */}
-        <div className="mt-32 max-w-4xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">
-            Simple Pricing
-          </h2>
-          <p className="text-center text-gray-600 mb-12">Start free, upgrade when you need more</p>
+      {/* Supported Platforms - Full Width (outside container) */}
+      <div className="mt-16 relative w-full">
+          {/* Top divider */}
+          <div className="relative">
+            <img src="/images/divider_blue.png" alt="" className="w-full h-auto block translate-y-[10px]" />
+            {/* Heading positioned higher in the divider white area */}
+            <div className="absolute left-0 right-0 px-6" style={{ top: 'calc(50% - 80px)' }}>
+              <div className="max-w-6xl mx-auto">
+                <h2 className="text-3xl md:text-4xl mb-0 drop-shadow-sm text-left" style={{ color: '#2E3192' }}>
+                  <span style={{ fontFamily: "'Corinthia', cursive", fontWeight: 700 }} className="text-5xl md:text-6xl">Supported </span>
+                  <span style={{ fontFamily: "'Boldonse', sans-serif" }} className="uppercase">Platforms</span>
+                </h2>
+                <p className="text-left mt-2 font-medium pb-[10px]" style={{ color: '#2E3192' }}>Works best with these marketplaces for one-time purchases!</p>
+              </div>
+            </div>
+          </div>
+          <div className="px-6 pt-12 pb-20 relative -mt-2" style={{ backgroundColor: '#2E3192' }}>
+          <div className="relative z-10 max-w-6xl mx-auto" style={{ marginTop: '-30px' }}>
 
-          <div className="grid md:grid-cols-2 gap-8">
+            {/* Best Supported */}
+            <div className="mb-8">
+              <h3 className="text-sm font-semibold text-white/60 mb-4 text-center uppercase tracking-wider">Best Support</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                    A3D
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69]">ACON3D</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">3D assets, textures</p>
+                  <span className="inline-block mt-2 text-xs bg-[#cba2ea]/30 text-[#2d1b69] px-2 py-1 rounded-full">Title & image detection</span>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-orange-400 to-pink-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                    CSP
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69]">Clip Studio Paint</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">Brushes, materials, 3D</p>
+                  <span className="inline-block mt-2 text-xs bg-[#cba2ea]/30 text-[#2d1b69] px-2 py-1 rounded-full">CLIPPY & GOLD support</span>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                    AMZ
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69]">Amazon</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">Books, art supplies, etc.</p>
+                  <span className="inline-block mt-2 text-xs bg-[#cba2ea]/30 text-[#2d1b69] px-2 py-1 rounded-full">Multi-region currency</span>
+                </div>
+
+                <div className="bg-white/80 backdrop-blur-sm rounded-xl p-6 text-center border border-[#cba2ea]/30 hover:bg-white/90 hover:shadow-lg transition-all">
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl flex items-center justify-center text-white font-bold text-lg">
+                    VG
+                  </div>
+                  <h4 className="font-semibold text-[#2d1b69]">VGen</h4>
+                  <p className="text-xs text-[#5a4a7e] mt-1">Artist commissions</p>
+                  <span className="inline-block mt-2 text-xs bg-[#cba2ea]/30 text-[#2d1b69] px-2 py-1 rounded-full">Commission tracking</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Also Works With */}
+            <div>
+              <h3 className="text-sm font-semibold text-white/60 mb-4 text-center uppercase tracking-wider">Also Works With</h3>
+              <div className="flex flex-wrap justify-center gap-3">
+                {['Gumroad', 'itch.io', 'Booth.pm', 'Unity Asset Store', 'Sketchfab', 'ArtStation', 'Blender Market', 'Turbosquid', '+ Any website'].map((platform) => (
+                  <span
+                    key={platform}
+                    className={`px-4 py-2 rounded-full text-sm font-medium ${
+                      platform === '+ Any website'
+                        ? 'bg-white text-[#2E3192] border border-white shadow-sm'
+                        : 'bg-white/20 text-white border border-white/30'
+                    }`}
+                  >
+                    {platform}
+                  </span>
+                ))}
+              </div>
+              <p className="text-center text-sm text-white/70 mt-4 font-medium">
+                Request a marketplace and we'll add support for it! (Not for subscription services like Freepik, Adobe Stock, Envato, etc.)
+              </p>
+            </div>
+          </div>
+          </div>
+          {/* Pricing section - starts behind divider */}
+          <div
+            className="relative -mt-20"
+            style={{ backgroundImage: 'url(/images/kawaii-bg.jpg)', backgroundSize: 'cover', backgroundPosition: 'center' }}
+          >
+            {/* Divider on top */}
+            <img src="/images/divider-blue-bottom.png" alt="" className="w-full h-auto block relative z-10" />
+
+            {/* Pricing content with heading inside */}
+            <div className="px-6 pb-20 relative z-10" style={{ marginTop: '-210px' }}>
+              <div className="max-w-4xl mx-auto">
+                {/* Simple Pricing heading */}
+                <div className="text-right mb-8" style={{ marginTop: '-30px' }}>
+                  <h2 className="text-3xl md:text-4xl mb-0 drop-shadow-sm" style={{ color: '#77549d' }}>
+                    <span style={{ fontFamily: "'Corinthia', cursive", fontWeight: 700 }} className="text-5xl md:text-6xl">Simple </span>
+                    <span style={{ fontFamily: "'Boldonse', sans-serif" }} className="uppercase">Pricing</span>
+                  </h2>
+                  <p className="text-[#77549d] mt-2 font-medium">Start free, upgrade when you need more</p>
+                </div>
+                <div className="grid md:grid-cols-2 gap-8">
             {/* Free Tier */}
             <div className="bg-white rounded-2xl p-8 shadow-md border border-gray-200 hover:shadow-lg transition-all">
               <div className="text-center mb-6">
+                {/* Sleeping cat thumbnail */}
+                <div className="w-56 h-56 mx-auto mb-4 relative">
+                  <Image
+                    src="/images/cat-rock.png"
+                    alt="Sleeping cat"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">Free</h3>
                 <div className="text-4xl font-bold text-gray-900">$0</div>
                 <p className="text-gray-500 mt-1">Forever free</p>
@@ -220,23 +346,46 @@ export default function LandingPage() {
               </ul>
               <button
                 onClick={() => signInWithGoogle()}
-                className="w-full py-3 px-6 border-2 border-[#2868c6] text-[#2868c6] rounded-xl font-semibold hover:bg-[#2868c6] hover:text-white transition-all cursor-pointer"
+                className="w-full py-3 px-6 bg-gradient-to-r from-[#2868c6] to-[#5a8fd6] text-white rounded-xl font-semibold hover:from-[#1e5aa8] hover:to-[#4a7fc6] transition-all cursor-pointer"
               >
                 Get Started
               </button>
             </div>
 
             {/* Premium Tier */}
-            <div className="bg-gradient-to-br from-[#2868c6] to-[#cba2ea] rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative overflow-hidden">
-              <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full">
+            <div className="shiny-border rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all relative">
+              {/* Sparkle dark background */}
+              <div
+                className="absolute inset-0 bg-cover bg-center rounded-2xl overflow-hidden"
+                style={{ backgroundImage: 'url(/images/sparkle-dark.jpg)' }}
+              />
+
+              {/* Sparkles scattered across the box */}
+              <i className="fas fa-sparkles absolute top-8 left-8 text-yellow-300/70 text-lg animate-sparkle z-10"></i>
+              <i className="fas fa-star absolute top-20 right-12 text-white/60 text-sm animate-sparkle z-10" style={{ animationDelay: '0.3s' }}></i>
+              <i className="fas fa-sparkles absolute bottom-24 left-12 text-[#91d2f4]/70 text-base animate-sparkle z-10" style={{ animationDelay: '0.7s' }}></i>
+              <i className="fas fa-star absolute bottom-32 right-8 text-yellow-200/60 text-xs animate-sparkle z-10" style={{ animationDelay: '1s' }}></i>
+              <i className="fas fa-sparkles absolute top-1/2 left-6 text-white/50 text-sm animate-sparkle z-10" style={{ animationDelay: '0.5s' }}></i>
+              <i className="fas fa-star absolute top-1/3 right-6 text-[#cba2ea]/60 text-base animate-sparkle z-10" style={{ animationDelay: '0.8s' }}></i>
+
+              <div className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-full z-10">
                 BETA DEAL
               </div>
-              <div className="text-center mb-6">
+              <div className="text-center mb-6 relative z-10">
+                {/* Onsen cat thumbnail */}
+                <div className="w-48 h-48 mx-auto mb-4 relative">
+                  <Image
+                    src="/images/cat-onsen.png"
+                    alt="Relaxing cat"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
                 <h3 className="text-2xl font-bold text-white mb-2">Premium</h3>
                 <div className="text-4xl font-bold text-white">$9.99</div>
-                <p className="text-white/80 mt-1">One-time payment</p>
+                <p className="text-white/70 mt-1">One-time payment</p>
               </div>
-              <ul className="space-y-3 mb-8">
+              <ul className="space-y-3 mb-8 relative z-10">
                 <li className="flex items-center gap-2 text-white">
                   <svg className="w-5 h-5 text-yellow-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -270,16 +419,21 @@ export default function LandingPage() {
               </ul>
               <button
                 onClick={() => signInWithGoogle()}
-                className="w-full py-3 px-6 bg-white text-[#2868c6] rounded-xl font-semibold hover:bg-gray-100 transition-all cursor-pointer"
+                className="shiny-button w-full py-3 px-6 text-white rounded-xl font-semibold hover:brightness-110 transition-all cursor-pointer relative z-10 shadow-md"
               >
                 Get Premium
               </button>
             </div>
+                </div>
+              </div>
+            </div>
+            {/* Bottom rip divider */}
+            <img src="/images/rip-divider.png" alt="" className="w-full h-auto block -mb-8" />
           </div>
         </div>
 
         {/* How it Works */}
-        <div className="mt-32 max-w-6xl mx-auto">
+        <div className="max-w-6xl mx-auto px-6 mt-12">
           <div className="bg-gradient-to-r from-blue-50 to-pink-50 rounded-3xl p-12 border border-gray-200">
             <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent">
               How it works
@@ -357,7 +511,16 @@ export default function LandingPage() {
 
         {/* Call to Action - Castle */}
         <div className="mt-32 max-w-4xl mx-auto">
-          <div className="bg-gradient-to-r from-blue-50 to-pink-50 rounded-3xl p-12 border border-gray-200">
+          <div className="relative rounded-3xl p-12 border border-gray-200 overflow-hidden">
+            {/* Forest background with 60% opacity */}
+            <div
+              className="absolute inset-0 bg-cover bg-center opacity-60"
+              style={{ backgroundImage: 'url(/images/forest-bg.jpg)' }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-50/40 to-pink-50/40" />
+
+            {/* Content */}
+            <div className="relative z-10">
             {/* Philosophy */}
             <div className="text-center mb-8">
               <p className="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto">
@@ -371,32 +534,78 @@ export default function LandingPage() {
             <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#2868c6] to-[#cba2ea] bg-clip-text text-transparent mb-8 text-center">
               Go build that castle!
             </h2>
-            <div className="relative w-48 h-48 mx-auto">
+            <div className="relative w-64 h-48 mx-auto">
               <Image
                 src="/images/castle.png"
                 alt="Build your castle"
                 fill
                 className="object-contain drop-shadow-lg"
               />
+              {/* Cat with pickaxe - bobbing animation on right side */}
+              <div className="absolute -right-20 bottom-0 w-24 h-24 animate-bob" style={{ animation: 'bob 2s ease-in-out infinite' }}>
+                <Image
+                  src="/images/cat-pickaxe.png"
+                  alt=""
+                  fill
+                  className="object-contain"
+                />
+              </div>
+            </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
         <div className="mt-16 pb-8">
-          <p className="text-center text-gray-700">
-            Made by YuyuKit
-          </p>
-          <p className="text-center text-sm mt-2 text-gray-500">
-            © melty haeon 2025
-          </p>
-          <p className="text-center text-sm mt-3">
-            <a href="/privacy" className="text-gray-600 hover:text-[#2868c6] transition underline">
-              Privacy Policy
-            </a>
-          </p>
+          <div className="max-w-4xl mx-auto border-t border-gray-200 pt-8">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              {/* Left - Branding */}
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 relative">
+                  <Image
+                    src="/yuyu_mojis/yuwon_veryhappy.png"
+                    alt="MyPebbles"
+                    fill
+                    className="object-contain"
+                  />
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-800">MyPebbles</span>
+                  <p className="text-xs text-gray-500">Made by YuyuKit</p>
+                </div>
+              </div>
+
+              {/* Center - Links */}
+              <div className="flex flex-wrap justify-center gap-6 text-sm">
+                <a href="/about" className="text-gray-600 hover:text-[#2868c6] transition">
+                  About
+                </a>
+                <a href="/pricing" className="text-gray-600 hover:text-[#2868c6] transition">
+                  Pricing
+                </a>
+                <a href="/privacy" className="text-gray-600 hover:text-[#2868c6] transition">
+                  Privacy Policy
+                </a>
+                <a href="mailto:support@pebblz.xyz" className="text-gray-600 hover:text-[#2868c6] transition">
+                  Contact
+                </a>
+                <a
+                  href="https://ko-fi.com/yuyukit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-[#2868c6] transition"
+                >
+                  Support Us
+                </a>
+              </div>
+
+              {/* Right - Copyright */}
+              <p className="text-xs text-gray-400">
+                © melty haeon 2025
+              </p>
+            </div>
+          </div>
         </div>
-      </main>
 
       {/* Lightbox Modal */}
       {lightboxImage && (

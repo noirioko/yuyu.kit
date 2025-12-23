@@ -1,5 +1,377 @@
 console.log('🎨 MyPebbles extension loaded!');
 
+// Listen for messages from background script (for sale scraping)
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'scrapeSalePage') {
+    (async () => {
+      try {
+        const result = await scrapeSalePageItems();
+        sendResponse(result);
+      } catch (error) {
+        console.error('❌ Error scraping sale page:', error);
+        sendResponse({ items: [], hasNextPage: false, error: error.message });
+      }
+    })();
+    return true; // Keep channel open for async
+  }
+
+  if (request.action === 'goToNextPage') {
+    (async () => {
+      try {
+        const success = await clickNextPage();
+        sendResponse({ success });
+      } catch (error) {
+        console.error('❌ Error going to next page:', error);
+        sendResponse({ success: false });
+      }
+    })();
+    return true;
+  }
+});
+
+// Scrape sale items from current page (returns items + pagination info)
+async function scrapeSalePageItems() {
+  console.log('🔍 Scraping sale page items...');
+
+  // Wait a bit for any lazy-loaded content
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  const saleItems = [];
+  const productLinks = document.querySelectorAll('a[href*="/product/"]');
+  const seenUrls = new Set();
+
+  console.log(`📦 Found ${productLinks.length} product links`);
+
+  for (const link of productLinks) {
+    try {
+      const href = link.href;
+      if (seenUrls.has(href)) continue;
+      seenUrls.add(href);
+
+      let title = '';
+      const titleEl = link.querySelector('h3, h4, [class*="title"], [class*="name"]') ||
+                     link.closest('[class*="card"], [class*="item"]')?.querySelector('h3, h4, [class*="title"]');
+
+      if (titleEl) {
+        title = titleEl.textContent.trim();
+      } else {
+        title = link.textContent.trim().split('\n')[0];
+      }
+
+      if (!title || title.length < 2) continue;
+
+      let thumbnailUrl = '';
+      const img = link.querySelector('img') ||
+                  link.closest('[class*="card"], [class*="item"]')?.querySelector('img');
+      if (img) {
+        thumbnailUrl = img.src || img.getAttribute('data-src') || '';
+      }
+
+      const container = link.closest('[class*="card"], [class*="item"]') || link.parentElement;
+      let salePrice = '';
+      let originalPrice = '';
+      let discount = '';
+
+      if (container) {
+        const crossedOut = container.querySelector('del, s, [style*="line-through"]');
+        if (crossedOut) originalPrice = crossedOut.textContent.trim();
+
+        const discountEl = container.querySelector('[class*="discount"], [class*="sale"], [class*="percent"]');
+        if (discountEl) discount = discountEl.textContent.trim();
+
+        const priceEls = container.querySelectorAll('[class*="price"]');
+        for (const priceEl of priceEls) {
+          const text = priceEl.textContent.trim();
+          if (text.match(/[\d,]+/) && !priceEl.matches('del, s, [style*="line-through"]')) {
+            salePrice = text;
+            break;
+          }
+        }
+      }
+
+      saleItems.push({
+        title,
+        url: href,
+        thumbnailUrl,
+        salePrice,
+        originalPrice,
+        discount,
+        scrapedAt: new Date().toISOString()
+      });
+
+    } catch (e) {
+      console.error('Error scraping item:', e);
+    }
+  }
+
+  // Check if there's a next page button
+  const hasNextPage = checkHasNextPage();
+
+  console.log(`✅ Scraped ${saleItems.length} items, hasNextPage: ${hasNextPage}`);
+
+  return { items: saleItems, hasNextPage };
+}
+
+// Check if there's a next page
+function checkHasNextPage() {
+  // Look for pagination buttons
+  const nextBtn = document.querySelector(
+    'a[aria-label="Next"], ' +
+    'button[aria-label="Next"], ' +
+    '[class*="pagination"] a:last-child:not([disabled]), ' +
+    '[class*="pagination"] button:last-child:not([disabled]), ' +
+    'a[rel="next"], ' +
+    '[class*="next"]:not([disabled])'
+  );
+
+  if (nextBtn) {
+    // Check if it's not disabled
+    const isDisabled = nextBtn.disabled ||
+                       nextBtn.classList.contains('disabled') ||
+                       nextBtn.getAttribute('aria-disabled') === 'true';
+    return !isDisabled;
+  }
+
+  return false;
+}
+
+// Click the next page button
+async function clickNextPage() {
+  const nextBtn = document.querySelector(
+    'a[aria-label="Next"], ' +
+    'button[aria-label="Next"], ' +
+    '[class*="pagination"] a:last-child:not([disabled]), ' +
+    '[class*="pagination"] button:last-child:not([disabled]), ' +
+    'a[rel="next"], ' +
+    '[class*="next"]:not([disabled])'
+  );
+
+  if (nextBtn && !nextBtn.disabled) {
+    console.log('➡️ Clicking next page button...');
+    nextBtn.click();
+    // Wait for page to load
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    return true;
+  }
+
+  return false;
+}
+
+// Check if we're on ACON3D sale page and should scrape (original auto-scrape behavior)
+async function checkAndScrapeSalePage() {
+  const url = window.location.href;
+
+  // Only run on ACON3D sale page
+  if (!url.includes('acon3d.com') || !url.includes('/event/sale')) {
+    return;
+  }
+
+  console.log('🔥 ACON3D Sale page detected! Starting scrape...');
+
+  // Wait for page to fully load
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
+  // Scrape sale items
+  const saleItems = [];
+
+  // Find all product cards/links on the sale page
+  const productLinks = document.querySelectorAll('a[href*="/product/"]');
+
+  console.log(`📦 Found ${productLinks.length} product links`);
+
+  const seenUrls = new Set();
+
+  for (const link of productLinks) {
+    try {
+      const href = link.href;
+
+      // Skip duplicates
+      if (seenUrls.has(href)) continue;
+      seenUrls.add(href);
+
+      // Get title from link text or nearby elements
+      let title = '';
+      const titleEl = link.querySelector('h3, h4, [class*="title"], [class*="name"]') ||
+                     link.closest('[class*="card"], [class*="item"]')?.querySelector('h3, h4, [class*="title"]');
+
+      if (titleEl) {
+        title = titleEl.textContent.trim();
+      } else {
+        title = link.textContent.trim().split('\n')[0];
+      }
+
+      if (!title || title.length < 2) continue;
+
+      // Get thumbnail
+      let thumbnailUrl = '';
+      const img = link.querySelector('img') ||
+                  link.closest('[class*="card"], [class*="item"]')?.querySelector('img');
+      if (img) {
+        thumbnailUrl = img.src || img.getAttribute('data-src') || '';
+      }
+
+      // Get prices - look for sale price and original price
+      const container = link.closest('[class*="card"], [class*="item"]') || link.parentElement;
+      let salePrice = '';
+      let originalPrice = '';
+      let discount = '';
+
+      if (container) {
+        // Look for crossed-out price (original)
+        const crossedOut = container.querySelector('del, s, [style*="line-through"]');
+        if (crossedOut) {
+          originalPrice = crossedOut.textContent.trim();
+        }
+
+        // Look for discount badge
+        const discountEl = container.querySelector('[class*="discount"], [class*="sale"], [class*="percent"]');
+        if (discountEl) {
+          discount = discountEl.textContent.trim();
+        }
+
+        // Look for current/sale price
+        const priceEls = container.querySelectorAll('[class*="price"]');
+        for (const priceEl of priceEls) {
+          const text = priceEl.textContent.trim();
+          if (text.match(/[\d,]+/) && !priceEl.matches('del, s, [style*="line-through"]')) {
+            salePrice = text;
+            break;
+          }
+        }
+      }
+
+      saleItems.push({
+        title,
+        url: href,
+        thumbnailUrl,
+        salePrice,
+        originalPrice,
+        discount,
+        scrapedAt: new Date().toISOString()
+      });
+
+    } catch (e) {
+      console.error('Error scraping item:', e);
+    }
+  }
+
+  console.log(`✅ Scraped ${saleItems.length} sale items`);
+
+  // Send to Firebase
+  if (saleItems.length > 0) {
+    try {
+      const { apiKey } = await chrome.storage.sync.get(['apiKey']);
+
+      if (!apiKey) {
+        console.log('⚠️ No API key, cannot save sales data');
+        showSaleNotification(saleItems.length, false, 'Please connect your account first');
+        return;
+      }
+
+      // Detect server URL - try both common dev ports
+      let serverUrl = 'https://pebblz.xyz';
+      try {
+        const localCheck3000 = await fetch('http://localhost:3000/api/health', { method: 'HEAD' }).catch(() => null);
+        const localCheck3001 = await fetch('http://localhost:3001/api/health', { method: 'HEAD' }).catch(() => null);
+        if (localCheck3000?.ok) serverUrl = 'http://localhost:3000';
+        else if (localCheck3001?.ok) serverUrl = 'http://localhost:3001';
+        console.log('🌐 Using server:', serverUrl);
+      } catch (e) { /* use production */ }
+
+      const response = await fetch(`${serverUrl}/api/save-sales`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: apiKey,
+          items: saleItems,
+          lastUpdated: new Date().toISOString()
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        console.log('✅ Sales data saved to Firebase!');
+        showSaleNotification(saleItems.length, true);
+      } else {
+        console.error('❌ Failed to save sales:', result.error);
+        showSaleNotification(saleItems.length, false, result.error);
+      }
+    } catch (e) {
+      console.error('❌ Error saving sales:', e);
+      showSaleNotification(saleItems.length, false, e.message);
+    }
+  }
+}
+
+// Show notification on the page
+function showSaleNotification(count, success, error = '') {
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    z-index: 999999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    animation: slideIn 0.3s ease-out;
+    max-width: 320px;
+    ${success
+      ? 'background: linear-gradient(135deg, #10b981, #059669); color: white;'
+      : 'background: linear-gradient(135deg, #ef4444, #dc2626); color: white;'}
+  `;
+
+  notification.innerHTML = success
+    ? `<div style="font-weight: 600; margin-bottom: 6px; font-size: 16px;">🔥 Sales Synced!</div>
+       <div style="opacity: 0.9; margin-bottom: 12px;">${count} sale items found and saved</div>
+       <div style="display: flex; gap: 8px;">
+         <a href="https://pebblz.xyz/sales" target="_blank" style="
+           background: white;
+           color: #059669;
+           padding: 8px 16px;
+           border-radius: 8px;
+           text-decoration: none;
+           font-weight: 600;
+           font-size: 13px;
+           flex: 1;
+           text-align: center;
+         ">View Sales Page →</a>
+       </div>
+       <div style="opacity: 0.7; font-size: 11px; margin-top: 10px; text-align: center;">
+         Check if any of your wishlist items are on sale!
+       </div>`
+    : `<div style="font-weight: 600; margin-bottom: 4px;">❌ Sync Failed</div>
+       <div style="opacity: 0.9;">${error || 'Unknown error'}</div>`;
+
+  document.body.appendChild(notification);
+
+  // Add animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Remove after 8 seconds (longer since there's a CTA button)
+  setTimeout(() => {
+    notification.style.animation = 'slideIn 0.3s ease-out reverse';
+    setTimeout(() => notification.remove(), 300);
+  }, 8000);
+}
+
+// Run sale scraper when page loads
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkAndScrapeSalePage);
+} else {
+  checkAndScrapeSalePage();
+}
+
 // Extract asset data from the current page
 function extractAssetData() {
   console.log('🔍 Starting extraction from:', window.location.href);
@@ -24,9 +396,19 @@ function extractAssetData() {
     data.platform = 'CSP Asset';
   } else if (hostname.includes('amazon')) {
     data.platform = 'Amazon';
+    // Set currency based on Amazon region
+    if (hostname.includes('amazon.co.jp')) {
+      data.currency = '¥';
+    } else if (hostname.includes('amazon.co.uk')) {
+      data.currency = '£';
+    } else if (hostname.includes('amazon.de') || hostname.includes('amazon.fr') || hostname.includes('amazon.it') || hostname.includes('amazon.es')) {
+      data.currency = '€';
+    }
+  } else if (hostname.includes('vgen')) {
+    data.platform = 'VGEN';
   }
 
-  console.log('🏷️ Platform detected:', data.platform);
+  console.log('🏷️ Platform detected:', data.platform, 'Currency:', data.currency);
 
   // CSP-SPECIFIC EXTRACTION (do this FIRST before generic methods)
   if (data.platform === 'CSP Asset') {
@@ -89,43 +471,61 @@ function extractAssetData() {
       console.log('✅ Found Amazon title:', data.title);
     }
 
-    // Amazon Image: #imgTagWrapperId img or #landingImage
-    const amazonImgWrapper = document.querySelector('#imgTagWrapperId img');
-    const amazonLandingImg = document.querySelector('#landingImage');
-    const amazonMainImg = document.querySelector('#imgBlkFront');
+    // Amazon Image: Try multiple selectors
+    const amazonImageSelectors = [
+      '#imgTagWrapperId img',
+      '#landingImage',
+      '#imgBlkFront',
+      '#ebooksImgBlkFront',  // Kindle books
+      '#main-image',
+      '#img-wrapper img',
+      '.a-dynamic-image',
+      '#imageBlock img'
+    ];
 
-    if (amazonImgWrapper && amazonImgWrapper.src) {
-      data.thumbnailUrl = amazonImgWrapper.src;
-      console.log('✅ Found Amazon image from #imgTagWrapperId:', data.thumbnailUrl);
-    } else if (amazonLandingImg && amazonLandingImg.src) {
-      data.thumbnailUrl = amazonLandingImg.src;
-      console.log('✅ Found Amazon image from #landingImage:', data.thumbnailUrl);
-    } else if (amazonMainImg && amazonMainImg.src) {
-      data.thumbnailUrl = amazonMainImg.src;
-      console.log('✅ Found Amazon image from #imgBlkFront:', data.thumbnailUrl);
+    for (const selector of amazonImageSelectors) {
+      const img = document.querySelector(selector);
+      if (img && (img.src || img.getAttribute('data-old-hires'))) {
+        data.thumbnailUrl = img.getAttribute('data-old-hires') || img.src;
+        // Clean up Amazon image URL to get larger version
+        if (data.thumbnailUrl.includes('._')) {
+          data.thumbnailUrl = data.thumbnailUrl.replace(/\._[^.]+_\./, '.');
+        }
+        console.log('✅ Found Amazon image from', selector, ':', data.thumbnailUrl);
+        break;
+      }
     }
 
-    // Amazon Price: .a-price .a-offscreen or #priceblock_ourprice
-    const amazonPrice = document.querySelector('.a-price .a-offscreen');
-    const amazonPriceAlt = document.querySelector('#priceblock_ourprice, #priceblock_dealprice, .a-price-whole');
+    // Amazon Price: Try multiple selectors (including Japan-specific)
+    const amazonPriceSelectors = [
+      '.a-price .a-offscreen',
+      '#priceblock_ourprice',
+      '#priceblock_dealprice',
+      '#priceblock_saleprice',
+      '.a-price-whole',
+      '#kindle-price',
+      '#price',
+      '.a-color-price',
+      '#newBuyBoxPrice',
+      '#corePrice_feature_div .a-offscreen'
+    ];
 
-    if (amazonPrice) {
-      const priceText = amazonPrice.textContent.trim();
-      const match = priceText.match(/([\d,]+\.?\d*)/);
-      if (match) {
-        data.price = parseFloat(match[1].replace(/,/g, ''));
-        if (priceText.includes('$')) data.currency = '$';
-        else if (priceText.includes('¥')) data.currency = '¥';
-        else if (priceText.includes('€')) data.currency = '€';
-        else if (priceText.includes('£')) data.currency = '£';
-        console.log('✅ Found Amazon price:', data.price, data.currency);
-      }
-    } else if (amazonPriceAlt) {
-      const priceText = amazonPriceAlt.textContent.trim();
-      const match = priceText.match(/([\d,]+\.?\d*)/);
-      if (match) {
-        data.price = parseFloat(match[1].replace(/,/g, ''));
-        console.log('✅ Found Amazon price (alt):', data.price);
+    for (const selector of amazonPriceSelectors) {
+      const priceEl = document.querySelector(selector);
+      if (priceEl) {
+        const priceText = priceEl.textContent.trim();
+        // Match price with various formats (1,234 or 1234 or 1,234.56)
+        const match = priceText.match(/([\d,]+\.?\d*)/);
+        if (match) {
+          data.price = parseFloat(match[1].replace(/,/g, ''));
+          // Override currency if found in price text
+          if (priceText.includes('$')) data.currency = '$';
+          else if (priceText.includes('¥') || priceText.includes('￥')) data.currency = '¥';
+          else if (priceText.includes('€')) data.currency = '€';
+          else if (priceText.includes('£')) data.currency = '£';
+          console.log('✅ Found Amazon price from', selector, ':', data.price, data.currency);
+          break;
+        }
       }
     }
 
@@ -147,6 +547,94 @@ function extractAssetData() {
       if (brandText.length >= 2 && brandText.length <= 50) {
         data.creator = brandText;
         console.log('✅ Found Amazon brand:', data.creator);
+      }
+    }
+  }
+
+  // VGEN-SPECIFIC EXTRACTION
+  if (data.platform === 'VGEN') {
+    console.log('🎨 Using VGEN-specific extraction...');
+
+    // VGEN Price: Look for discountcontainer
+    const discountContainer = document.querySelector('[class*="discountcontainer"], [class*="DiscountContainer"]');
+    if (discountContainer) {
+      console.log('🔍 VGEN discountcontainer HTML:', discountContainer.innerHTML);
+
+      // Check for line-through price (original price = means it's on sale)
+      const lineThroughEl = discountContainer.querySelector('[style*="line-through"]');
+      const priceSpans = discountContainer.querySelectorAll('span[class*="Text__StyledSpan"]');
+
+      if (lineThroughEl && priceSpans.length >= 2) {
+        // It's on sale! First span is sale price, line-through is original
+        const salePriceText = priceSpans[0].textContent.trim();
+        const originalPriceText = lineThroughEl.textContent.trim();
+
+        console.log('🔍 VGEN sale price text:', salePriceText);
+        console.log('🔍 VGEN original price text:', originalPriceText);
+
+        // Extract currency and price
+        const currencyMatch = salePriceText.match(/^([A-Z]{3}|[\$€£¥₩])/);
+        if (currencyMatch) {
+          const curr = currencyMatch[1];
+          if (curr === 'IDR') data.currency = 'IDR';
+          else if (curr === 'USD' || curr === '$') data.currency = '$';
+          else if (curr === 'EUR' || curr === '€') data.currency = '€';
+          else data.currency = curr;
+        }
+
+        const saleMatch = salePriceText.match(/([\d,]+\.?\d*)/);
+        const origMatch = originalPriceText.match(/([\d,]+\.?\d*)/);
+
+        if (saleMatch) {
+          data.price = parseFloat(saleMatch[1].replace(/,/g, ''));
+          console.log('✅ Found VGEN sale price:', data.price);
+        }
+        if (origMatch) {
+          data.originalPrice = parseFloat(origMatch[1].replace(/,/g, ''));
+          data.isOnSale = true;
+          console.log('✅ Found VGEN original price:', data.originalPrice, '- ON SALE!');
+        }
+      } else {
+        // Not on sale, just regular price
+        let priceText = discountContainer.textContent.trim();
+        priceText = priceText.replace(/^from\s*/i, '').trim();
+
+        const currencyMatch = priceText.match(/^([A-Z]{3}|[\$€£¥₩])/);
+        if (currencyMatch) {
+          const curr = currencyMatch[1];
+          if (curr === 'IDR') data.currency = 'IDR';
+          else if (curr === 'USD' || curr === '$') data.currency = '$';
+          else if (curr === 'EUR' || curr === '€') data.currency = '€';
+          else data.currency = curr;
+        }
+
+        const match = priceText.match(/([\d,]+\.?\d*)/);
+        if (match) {
+          data.price = parseFloat(match[1].replace(/,/g, ''));
+          data.isOnSale = false;
+          console.log('✅ Found VGEN price (not on sale):', data.price);
+        }
+      }
+    }
+
+    // VGEN Creator: Look for artist/creator info
+    const creatorSelectors = [
+      '[class*="artist"]',
+      '[class*="creator"]',
+      '[class*="seller"]',
+      'a[href*="/artist/"]',
+      'a[href*="/creator/"]'
+    ];
+
+    for (const selector of creatorSelectors) {
+      const el = document.querySelector(selector);
+      if (el) {
+        const creatorText = el.textContent.trim();
+        if (creatorText.length >= 2 && creatorText.length <= 50) {
+          data.creator = creatorText;
+          console.log('✅ Found VGEN creator:', data.creator);
+          break;
+        }
       }
     }
   }

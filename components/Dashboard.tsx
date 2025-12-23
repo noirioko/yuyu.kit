@@ -59,10 +59,20 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const assetsPerPage = 50;
 
+  // Duplicate checker state
+  const [showDuplicateChecker, setShowDuplicateChecker] = useState(false);
+  const [duplicateGroups, setDuplicateGroups] = useState<Asset[][]>([]);
+  const [checkingDuplicates, setCheckingDuplicates] = useState(false);
+
+  // ACON Sales checker state
+  const [showSalesChecker, setShowSalesChecker] = useState(false);
+  const [salesOnWishlist, setSalesOnWishlist] = useState<Asset[]>([]);
+  const [checkingSales, setCheckingSales] = useState(false);
+
   // Subscription state
   const [isPremium, setIsPremium] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
-  const FREE_LIMITS = { maxAssets: 50, maxProjects: 3 };
+  const FREE_LIMITS = { maxAssets: 50, maxProjects: 3, maxCollections: 5 };
 
   // Collapsible sidebar sections
   const [collapsedSections, setCollapsedSections] = useState<{view: boolean, projects: boolean, collections: boolean, tools: boolean}>({
@@ -344,6 +354,123 @@ export default function Dashboard() {
       console.error('❌ Error deleting data:', error);
       alert('Failed to delete all data. Some items may remain. Check console for details.');
     }
+  };
+
+  // Normalize URL for duplicate detection
+  const normalizeUrl = (url: string): string => {
+    try {
+      const urlObj = new URL(url);
+      // Remove only tracking parameters (keep important ones like id, product, etc.)
+      const paramsToRemove = ['ref', 'ref_', 'tag', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid', 'msclkid', 'affiliate', 'aff', 'source', 'mc_cid', 'mc_eid', 'spm', 'scm', 'pvid', 'algo_pvid', 'algo_exp_id', 'btsid', 'ws_ab_test', 'sk', 'aff_fcid', 'aff_fsk', 'aff_platform', 'aff_trace_key', 'terminal_id', 'afSmartRedirect'];
+      paramsToRemove.forEach(param => urlObj.searchParams.delete(param));
+
+      // Build normalized URL with remaining query params (important for Clip Studio, etc.)
+      let normalized = urlObj.origin + urlObj.pathname;
+
+      // Remove trailing slash
+      if (normalized.endsWith('/')) {
+        normalized = normalized.slice(0, -1);
+      }
+
+      // Sort and include remaining query params (so ?id=123&foo=bar equals ?foo=bar&id=123)
+      const sortedParams = new URLSearchParams([...urlObj.searchParams.entries()].sort());
+      const queryString = sortedParams.toString();
+      if (queryString) {
+        normalized += '?' + queryString;
+      }
+
+      return normalized.toLowerCase();
+    } catch {
+      return url.toLowerCase().trim();
+    }
+  };
+
+  // Check for duplicates
+  const handleCheckDuplicates = () => {
+    setCheckingDuplicates(true);
+
+    // Group assets by normalized URL
+    const urlMap = new Map<string, Asset[]>();
+
+    for (const asset of assets) {
+      if (!asset.url) continue;
+      const normalizedUrl = normalizeUrl(asset.url);
+      const existing = urlMap.get(normalizedUrl) || [];
+      existing.push(asset);
+      urlMap.set(normalizedUrl, existing);
+    }
+
+    // Filter to only groups with duplicates (more than 1 asset)
+    const duplicates: Asset[][] = [];
+    urlMap.forEach((group) => {
+      if (group.length > 1) {
+        // Sort by createdAt so oldest is first (the "original")
+        group.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        duplicates.push(group);
+      }
+    });
+
+    setDuplicateGroups(duplicates);
+    setCheckingDuplicates(false);
+    setShowDuplicateChecker(true);
+  };
+
+  // Check ACON sales against wishlist
+  const handleCheckAconSales = async () => {
+    setCheckingSales(true);
+    setSalesOnWishlist([]);
+
+    try {
+      // Get ACON wishlist items
+      const aconWishlistItems = assets.filter(
+        asset => asset.platform?.toLowerCase().includes('acon') && asset.status === 'wishlist'
+      );
+
+      if (aconWishlistItems.length === 0) {
+        setShowSalesChecker(true);
+        setCheckingSales(false);
+        return;
+      }
+
+      // Fetch current sales from API
+      const response = await fetch('/api/acon-sales');
+      const data = await response.json();
+
+      if (!data.success || !data.items) {
+        console.error('Failed to fetch sales:', data.error);
+        setShowSalesChecker(true);
+        setCheckingSales(false);
+        return;
+      }
+
+      // Match wishlist items against sale items
+      const saleUrls = new Set<string>(data.items.map((item: { url: string }) => item.url.toLowerCase()));
+      const saleTitlesArray: string[] = data.items.map((item: { title: string }) => item.title.toLowerCase());
+
+      const matchedItems = aconWishlistItems.filter(asset => {
+        // Match by URL
+        if (asset.url && saleUrls.has(asset.url.toLowerCase())) {
+          return true;
+        }
+        // Match by title (fuzzy - check if sale title contains asset title or vice versa)
+        if (asset.title) {
+          const assetTitle = asset.title.toLowerCase();
+          for (const saleTitle of saleTitlesArray) {
+            if (saleTitle.includes(assetTitle) || assetTitle.includes(saleTitle)) {
+              return true;
+            }
+          }
+        }
+        return false;
+      });
+
+      setSalesOnWishlist(matchedItems);
+      setShowSalesChecker(true);
+    } catch (error) {
+      console.error('Error checking sales:', error);
+    }
+
+    setCheckingSales(false);
   };
 
   // Generate stars only once to prevent re-randomization on every render
@@ -665,6 +792,40 @@ export default function Dashboard() {
                     </button>
 
                     <button
+                      onClick={() => {
+                        router.push('/support');
+                        setShowProfileMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
+                        theme === 'night'
+                          ? 'text-white hover:bg-white/10'
+                          : 'text-gray-700 hover:bg-[#91d2f4]/20'
+                      }`}
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>
+                      <span>Support & Help</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push('/pricing');
+                        setShowProfileMenu(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
+                        theme === 'night'
+                          ? 'text-white hover:bg-white/10'
+                          : 'text-gray-700 hover:bg-[#91d2f4]/20'
+                      }`}
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Pricing</span>
+                    </button>
+
+                    <button
                       onClick={toggleTheme}
                       className={`w-full text-left px-4 py-2 text-sm transition flex items-center gap-2 cursor-pointer ${
                         theme === 'night'
@@ -737,34 +898,41 @@ export default function Dashboard() {
       )}
 
       {/* Main Content */}
-      <div className="container mx-auto px-2 md:px-4 py-4 md:py-6">
-        <div className="flex flex-col md:grid md:grid-cols-12 gap-4 md:gap-6">
+      <div className="container mx-auto px-4 md:px-6 py-4 md:py-8">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 md:gap-6">
           {/* Sidebar - Hidden on mobile, shown as slide-out drawer */}
-          <aside className={`
-            fixed md:sticky top-0 left-0 h-full md:h-[calc(100vh-6rem)] md:top-20 w-72 md:w-auto
-            md:col-span-3 z-[450] md:z-auto
-            transform transition-transform duration-300 ease-in-out
-            ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-          `}>
-            <div className={`h-full rounded-none md:rounded-xl shadow-sm pt-20 md:pt-0 transition-all flex flex-col ${
-              theme === 'night'
-                ? 'bg-[#0a1c3d] md:bg-white/5 backdrop-blur-lg border-r md:border border-white/10'
-                : 'bg-white border-r md:border-none border-gray-200'
-            }`}>
-              {/* Close button for mobile */}
-              <button
-                onClick={() => setMobileMenuOpen(false)}
-                className={`absolute top-4 right-4 md:hidden p-2 rounded-lg ${
-                  theme === 'night' ? 'text-white hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'
-                }`}
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+          <div className="w-full lg:col-span-3">
+            {/* Mobile drawer - fixed full height */}
+            <div className={`
+              fixed top-0 left-0 h-full w-72 z-[450] lg:hidden
+              transform transition-transform duration-300 ease-in-out
+              ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}
+              ${theme === 'night' ? 'bg-[#0a1c3d] border-r border-white/10' : 'bg-white border-r border-gray-200'}
+            `}>
+              <div className="h-full flex flex-col pt-20 p-4">
+                {/* Close button */}
+                <button
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`absolute top-4 right-4 p-2 rounded-lg ${
+                    theme === 'night' ? 'text-white hover:bg-white/10' : 'text-gray-600 hover:bg-gray-100'
+                  }`}
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                {/* Mobile content will be duplicated below */}
+              </div>
+            </div>
 
-              {/* Scrollable content area */}
-              <div className="flex-1 overflow-y-auto p-6 md:pt-6">
+            {/* Desktop sidebar - sticky below header */}
+            <div className={`hidden lg:flex lg:flex-col rounded-xl shadow-sm p-4 md:p-6 lg:sticky lg:top-20 lg:max-h-[calc(100vh-100px)] transition-colors ${
+              theme === 'night'
+                ? 'bg-white/5 backdrop-blur-lg border border-white/10'
+                : 'bg-white'
+            }`}>
+              {/* Scrollable content area - flex-1 to fill available space */}
+              <div className="flex-1 overflow-y-auto min-h-0">
               {/* View Filters */}
               <div className="mb-4">
                 <button
@@ -983,13 +1151,33 @@ export default function Dashboard() {
                     <h3 className={`text-sm font-semibold ${
                       theme === 'night' ? 'text-white' : 'text-gray-700'
                     }`}>COLLECTIONS</h3>
+                    {!isPremium && !subscriptionLoading && (
+                      <span className={`text-xs ${
+                        collections.length >= FREE_LIMITS.maxCollections
+                          ? 'text-red-500'
+                          : theme === 'night' ? 'text-white/50' : 'text-gray-400'
+                      }`}>
+                        ({collections.length}/{FREE_LIMITS.maxCollections})
+                      </span>
+                    )}
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowAddCollection(true);
+                      if (!isPremium && collections.length >= FREE_LIMITS.maxCollections) {
+                        if (confirm(`You've reached the free limit of ${FREE_LIMITS.maxCollections} collections. Upgrade to Premium for unlimited collections?`)) {
+                          router.push('/upgrade');
+                        }
+                      } else {
+                        setShowAddCollection(true);
+                      }
                     }}
-                    className="text-[#2868c6] hover:text-[#3f3381] text-xl cursor-pointer"
+                    className={`text-xl cursor-pointer ${
+                      !isPremium && collections.length >= FREE_LIMITS.maxCollections
+                        ? 'text-gray-400 hover:text-[#cba2ea]'
+                        : 'text-[#cba2ea] hover:text-[#3f3381]'
+                    }`}
+                    title={!isPremium && collections.length >= FREE_LIMITS.maxCollections ? 'Upgrade to add more collections' : 'Add collection'}
                   >
                     +
                   </button>
@@ -1056,11 +1244,64 @@ export default function Dashboard() {
                   })}
                 </div>}
               </div>
+
+              {/* Tools */}
+              <div className="mb-4">
+                <button
+                  onClick={() => toggleSection('tools')}
+                  className="flex items-center gap-2 mb-2 w-full cursor-pointer group"
+                >
+                  <svg className={`w-3 h-3 transition-transform ${collapsedSections.tools ? '-rotate-90' : ''} ${
+                    theme === 'night' ? 'text-white/50' : 'text-gray-400'
+                  }`} fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                  <svg className="w-4 h-4 flex-shrink-0 text-[#f59e0b]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <h3 className={`text-sm font-semibold ${
+                    theme === 'night' ? 'text-white' : 'text-gray-700'
+                  }`}>TOOLS</h3>
+                </button>
+                {!collapsedSections.tools && <div className="space-y-1 ml-5">
+                  <button
+                    onClick={() => {
+                      handleCheckDuplicates();
+                      setMobileMenuOpen(false);
+                    }}
+                    disabled={checkingDuplicates}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 cursor-pointer ${
+                      theme === 'night'
+                        ? 'text-white/70 hover:bg-white/5'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    } ${checkingDuplicates ? 'opacity-50' : ''}`}
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    {checkingDuplicates ? 'Checking...' : 'Check for Duplicates'}
+                  </button>
+                  <button
+                    onClick={() => router.push('/sales')}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 cursor-pointer ${
+                      theme === 'night'
+                        ? 'text-white/70 hover:bg-white/5'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                    🔥 View Sales Page
+                  </button>
+                </div>}
+              </div>
               </div>
               {/* End scrollable content area */}
 
-              {/* Pinned bottom section */}
-              <div className={`p-4 border-t flex-shrink-0 ${
+              {/* Pinned bottom section - always visible, flex-shrink-0 to prevent shrinking */}
+              <div className={`flex-shrink-0 mt-4 pt-4 border-t ${
                 theme === 'night' ? 'border-white/10' : 'border-gray-100'
               }`}>
                 {/* Browse by Tags */}
@@ -1125,10 +1366,10 @@ export default function Dashboard() {
               </div>
               {/* End pinned bottom section */}
             </div>
-          </aside>
+          </div>
 
           {/* Assets Grid */}
-          <main className="w-full md:col-span-9">
+          <main className="w-full lg:col-span-9">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <h1 className={`text-xl md:text-2xl font-bold flex items-center gap-2 ${
                 theme === 'night' ? 'text-white' : 'text-gray-800'
@@ -1309,8 +1550,8 @@ export default function Dashboard() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       )}
-                      {/* Edit/Delete buttons - shown on hover */}
-                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Edit/Delete buttons - shown on hover (bottom-right to avoid sale badge) */}
+                      <div className="absolute bottom-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -1583,6 +1824,403 @@ export default function Dashboard() {
           collection={editingCollection}
           onClose={() => setEditingCollection(null)}
         />
+      )}
+
+      {/* Duplicate Checker Modal */}
+      {showDuplicateChecker && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
+          <div className={`rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col ${
+            theme === 'night'
+              ? 'bg-[#0a1c3d] border border-white/20'
+              : 'bg-white'
+          }`}>
+            {/* Header */}
+            <div className={`p-6 border-b flex items-center justify-between flex-shrink-0 ${
+              theme === 'night' ? 'border-white/10' : 'border-gray-100'
+            }`}>
+              <div>
+                <h3 className={`text-xl font-bold ${
+                  theme === 'night' ? 'text-white' : 'text-gray-800'
+                }`}>Duplicate Checker</h3>
+                <p className={`text-sm mt-1 ${
+                  theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                }`}>
+                  {duplicateGroups.length === 0
+                    ? 'No duplicates found!'
+                    : `Found ${duplicateGroups.length} group(s) of duplicate assets`}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowDuplicateChecker(false)}
+                className={`p-2 rounded-lg transition cursor-pointer ${
+                  theme === 'night'
+                    ? 'text-white/60 hover:bg-white/10'
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {duplicateGroups.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-4">✨</div>
+                  <p className={`text-lg font-medium ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>All clear!</p>
+                  <p className={`text-sm mt-2 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>You don&apos;t have any duplicate assets in your collection.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {duplicateGroups.map((group, groupIdx) => (
+                    <div
+                      key={groupIdx}
+                      className={`rounded-xl border p-4 ${
+                        theme === 'night'
+                          ? 'border-white/10 bg-white/5'
+                          : 'border-gray-200 bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
+                          theme === 'night'
+                            ? 'bg-yellow-500/20 text-yellow-400'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                          {group.length} duplicates
+                        </span>
+                        <span className={`text-xs ${
+                          theme === 'night' ? 'text-white/50' : 'text-gray-400'
+                        }`}>
+                          First added: {group[0].createdAt.toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="space-y-3">
+                        {group.map((asset, assetIdx) => (
+                          <div
+                            key={asset.id}
+                            className={`flex items-center gap-3 p-3 rounded-lg ${
+                              assetIdx === 0
+                                ? theme === 'night'
+                                  ? 'bg-green-500/10 border border-green-500/30'
+                                  : 'bg-green-50 border border-green-200'
+                                : theme === 'night'
+                                  ? 'bg-white/5'
+                                  : 'bg-white border border-gray-100'
+                            }`}
+                          >
+                            {/* Thumbnail */}
+                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20">
+                              {asset.thumbnailUrl ? (
+                                <img
+                                  src={asset.thumbnailUrl}
+                                  alt={asset.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                  <svg className="w-6 h-6 text-[#91d2f4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className={`font-medium truncate ${
+                                  theme === 'night' ? 'text-white' : 'text-gray-800'
+                                }`}>{asset.title}</h4>
+                                {assetIdx === 0 && (
+                                  <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                    theme === 'night'
+                                      ? 'bg-green-500/20 text-green-400'
+                                      : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    Original
+                                  </span>
+                                )}
+                              </div>
+                              <p className={`text-xs mt-1 ${
+                                theme === 'night' ? 'text-white/50' : 'text-gray-500'
+                              }`}>
+                                Added: {asset.createdAt.toLocaleDateString()} at {asset.createdAt.toLocaleTimeString()}
+                              </p>
+                              {asset.platform && (
+                                <p className={`text-xs ${
+                                  theme === 'night' ? 'text-white/40' : 'text-gray-400'
+                                }`}>{asset.platform}</p>
+                              )}
+                            </div>
+
+                            {/* Actions */}
+                            <div className="flex gap-2 flex-shrink-0">
+                              <button
+                                onClick={() => setViewingAsset(asset)}
+                                className={`p-2 rounded-lg transition cursor-pointer ${
+                                  theme === 'night'
+                                    ? 'bg-white/10 text-white hover:bg-white/20'
+                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                }`}
+                                title="View asset"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </button>
+                              {assetIdx !== 0 && (
+                                <button
+                                  onClick={async () => {
+                                    if (confirm(`Delete "${asset.title}"? This duplicate will be removed.`)) {
+                                      await handleDeleteAsset(asset.id);
+                                      // Update the duplicate groups
+                                      setDuplicateGroups(prev =>
+                                        prev.map(g =>
+                                          g.filter(a => a.id !== asset.id)
+                                        ).filter(g => g.length > 1)
+                                      );
+                                    }
+                                  }}
+                                  className={`p-2 rounded-lg transition cursor-pointer ${
+                                    theme === 'night'
+                                      ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                                      : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                  }`}
+                                  title="Delete duplicate"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className={`p-4 border-t flex-shrink-0 ${
+              theme === 'night' ? 'border-white/10' : 'border-gray-100'
+            }`}>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDuplicateChecker(false)}
+                  className={`flex-1 py-3 rounded-lg font-medium transition cursor-pointer ${
+                    theme === 'night'
+                      ? 'bg-white/10 text-white hover:bg-white/20'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Close
+                </button>
+                {duplicateGroups.length > 0 && (
+                  <button
+                    onClick={() => handleCheckDuplicates()}
+                    className={`px-4 py-3 rounded-lg font-medium transition cursor-pointer ${
+                      theme === 'night'
+                        ? 'bg-[#2868c6] text-white hover:bg-[#2868c6]/80'
+                        : 'bg-[#2868c6] text-white hover:bg-[#2868c6]/90'
+                    }`}
+                  >
+                    Refresh
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ACON Sales Checker Modal */}
+      {showSalesChecker && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[1000] p-4">
+          <div className={`rounded-2xl max-w-2xl w-full max-h-[80vh] flex flex-col ${
+            theme === 'night'
+              ? 'bg-[#0a1c3d] border border-white/20'
+              : 'bg-white'
+          }`}>
+            {/* Header */}
+            <div className={`p-6 border-b flex items-center justify-between flex-shrink-0 ${
+              theme === 'night' ? 'border-white/10' : 'border-gray-100'
+            }`}>
+              <div>
+                <h3 className={`text-xl font-bold flex items-center gap-2 ${
+                  theme === 'night' ? 'text-white' : 'text-gray-800'
+                }`}>
+                  <span className="text-green-500">$</span>
+                  ACON3D Sale Checker
+                </h3>
+                <p className={`text-sm mt-1 ${
+                  theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                }`}>
+                  {salesOnWishlist.length === 0
+                    ? 'No wishlist items are currently on sale'
+                    : `${salesOnWishlist.length} wishlist item(s) on sale!`}
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSalesChecker(false)}
+                className={`p-2 rounded-lg transition cursor-pointer ${
+                  theme === 'night'
+                    ? 'text-white/60 hover:bg-white/10'
+                    : 'text-gray-500 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {assets.filter(a => a.platform?.toLowerCase().includes('acon') && a.status === 'wishlist').length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-4">🔍</div>
+                  <p className={`text-lg font-medium ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>No ACON3D Wishlist Items</p>
+                  <p className={`text-sm mt-2 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>Add some ACON3D assets to your wishlist to check for sales!</p>
+                </div>
+              ) : salesOnWishlist.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-5xl mb-4">😴</div>
+                  <p className={`text-lg font-medium ${
+                    theme === 'night' ? 'text-white' : 'text-gray-800'
+                  }`}>No Sales Found</p>
+                  <p className={`text-sm mt-2 ${
+                    theme === 'night' ? 'text-white/60' : 'text-gray-500'
+                  }`}>None of your ACON3D wishlist items are currently on sale. Check back later!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className={`p-4 rounded-xl mb-4 ${
+                    theme === 'night'
+                      ? 'bg-green-500/10 border border-green-500/30'
+                      : 'bg-green-50 border border-green-200'
+                  }`}>
+                    <p className={`text-sm font-medium ${
+                      theme === 'night' ? 'text-green-400' : 'text-green-700'
+                    }`}>
+                      These items from your wishlist are currently on sale on ACON3D!
+                    </p>
+                  </div>
+                  {salesOnWishlist.map((asset) => (
+                    <div
+                      key={asset.id}
+                      className={`flex items-center gap-3 p-4 rounded-xl ${
+                        theme === 'night'
+                          ? 'bg-white/5 border border-white/10'
+                          : 'bg-gray-50 border border-gray-200'
+                      }`}
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#91d2f4]/20 to-[#cba2ea]/20">
+                        {asset.thumbnailUrl ? (
+                          <img
+                            src={asset.thumbnailUrl}
+                            alt={asset.title}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <svg className="w-8 h-8 text-[#91d2f4]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <h4 className={`font-medium ${
+                          theme === 'night' ? 'text-white' : 'text-gray-800'
+                        }`}>{asset.title}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className={`text-xs px-2 py-0.5 rounded-full ${
+                            theme === 'night'
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-green-100 text-green-700'
+                          }`}>
+                            ON SALE
+                          </span>
+                          {asset.platform && (
+                            <span className={`text-xs ${
+                              theme === 'night' ? 'text-white/40' : 'text-gray-400'
+                            }`}>{asset.platform}</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 flex-shrink-0">
+                        <a
+                          href={asset.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`p-2 rounded-lg transition cursor-pointer ${
+                            theme === 'night'
+                              ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                              : 'bg-green-100 text-green-600 hover:bg-green-200'
+                          }`}
+                          title="View on ACON3D"
+                        >
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className={`p-4 border-t flex-shrink-0 ${
+              theme === 'night' ? 'border-white/10' : 'border-gray-100'
+            }`}>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowSalesChecker(false)}
+                  className={`flex-1 py-3 rounded-lg font-medium transition cursor-pointer ${
+                    theme === 'night'
+                      ? 'bg-white/10 text-white hover:bg-white/20'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => handleCheckAconSales()}
+                  disabled={checkingSales}
+                  className={`px-4 py-3 rounded-lg font-medium transition cursor-pointer ${
+                    theme === 'night'
+                      ? 'bg-green-600 text-white hover:bg-green-700'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  } ${checkingSales ? 'opacity-50' : ''}`}
+                >
+                  {checkingSales ? 'Checking...' : 'Refresh'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Delete Confirmation Dialog */}

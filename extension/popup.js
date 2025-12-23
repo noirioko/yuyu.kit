@@ -8,26 +8,28 @@ const URLS = {
 
 let YUYU_ASSET_URL = URLS.production; // Default to production
 
-// Check if localhost is available
+// Check if localhost is available (try both common dev ports)
 async function detectServer() {
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 1000); // 1 second timeout
-
-    const response = await fetch(`${URLS.local}/api/health`, {
-      method: 'HEAD',
-      signal: controller.signal
-    }).catch(() => null);
-
-    clearTimeout(timeout);
-
-    if (response && response.ok) {
-      YUYU_ASSET_URL = URLS.local;
-      console.log('🏠 Using localhost');
-    } else {
-      YUYU_ASSET_URL = URLS.production;
-      console.log('🌐 Using production (pebblz.xyz)');
+    // Try port 3000 first
+    const check3000 = await fetch('http://localhost:3000/api/health', { method: 'HEAD' }).catch(() => null);
+    if (check3000?.ok) {
+      YUYU_ASSET_URL = 'http://localhost:3000';
+      console.log('🏠 Using localhost:3000');
+      return;
     }
+
+    // Try port 3001
+    const check3001 = await fetch('http://localhost:3001/api/health', { method: 'HEAD' }).catch(() => null);
+    if (check3001?.ok) {
+      YUYU_ASSET_URL = 'http://localhost:3001';
+      console.log('🏠 Using localhost:3001');
+      return;
+    }
+
+    // Fall back to production
+    YUYU_ASSET_URL = URLS.production;
+    console.log('🌐 Using production (pebblz.xyz)');
   } catch (e) {
     YUYU_ASSET_URL = URLS.production;
     console.log('🌐 Using production (pebblz.xyz)');
@@ -159,12 +161,30 @@ async function renderMain() {
 
     <div id="infoMessage" style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 10px; margin: 12px 0; font-size: 11px; line-height: 1.4; opacity: 0.9;">
       <div style="margin-bottom: 4px;">ℹ️ <strong>Note:</strong></div>
-      Auto-fill isn't perfect! Please double-check the creator/brand and price fields before saving.
+      Auto-fill isn't perfect! You can edit the creator/brand and price in the app after saving.
     </div>
 
     <button class="btn btn-secondary" id="openDashboardBtn">
       🏠 Open Dashboard
     </button>
+
+    <div style="display: flex; gap: 8px; margin-bottom: 4px;">
+      <button class="btn btn-secondary" id="checkSalesBtn" style="flex: 1; background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%); color: white;">
+        🔥 Check ACON Sales
+      </button>
+      <button class="btn btn-secondary" id="visitSalesBtn" style="width: 44px; padding: 8px; background: rgba(255,255,255,0.1);" title="Visit ACON Sale Page">
+        🌐
+      </button>
+    </div>
+    <div id="salesHint" style="font-size: 10px; opacity: 0.7; text-align: center; margin-bottom: 8px;">
+      Syncs all sale pages to find your wishlist deals
+    </div>
+    <div id="salesProgress" style="display: none; background: rgba(255,255,255,0.1); border-radius: 8px; padding: 10px; margin-bottom: 8px; text-align: center;">
+      <div id="salesProgressText" style="font-size: 12px; margin-bottom: 6px;">Syncing...</div>
+      <div style="background: rgba(255,255,255,0.2); border-radius: 4px; height: 4px; overflow: hidden;">
+        <div id="salesProgressBar" style="background: linear-gradient(90deg, #ff6b6b, #fbbf24); height: 100%; width: 0%; transition: width 0.3s;"></div>
+      </div>
+    </div>
 
     <button class="btn btn-secondary" id="settingsBtn">
       ⚙️ Settings
@@ -268,6 +288,91 @@ async function renderMain() {
   // Open dashboard button
   document.getElementById('openDashboardBtn').addEventListener('click', () => {
     chrome.tabs.create({ url: YUYU_ASSET_URL });
+  });
+
+  // Visit ACON Sales page button (globe icon)
+  document.getElementById('visitSalesBtn').addEventListener('click', () => {
+    chrome.tabs.create({ url: 'https://www.acon3d.com/en/event/sale' });
+  });
+
+  // Check ACON Sales button - with progress animation
+  document.getElementById('checkSalesBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('checkSalesBtn');
+    const hint = document.getElementById('salesHint');
+    const progress = document.getElementById('salesProgress');
+    const progressText = document.getElementById('salesProgressText');
+    const progressBar = document.getElementById('salesProgressBar');
+
+    btn.textContent = '⏳ Syncing...';
+    btn.disabled = true;
+    hint.style.display = 'none';
+    progress.style.display = 'block';
+    progressText.textContent = 'Starting sync...';
+    progressBar.style.width = '5%';
+
+    // Listen for progress updates from background script
+    const progressListener = (message) => {
+      if (message.action === 'saleProgress') {
+        if (message.status === 'scraping') {
+          progressText.textContent = `📄 Reading page ${message.page}...`;
+          progressBar.style.width = `${Math.min(10 + message.page * 4, 80)}%`;
+        } else if (message.status === 'loading') {
+          progressText.textContent = `⏳ Loading page ${message.page}...`;
+        } else if (message.status === 'saving') {
+          progressText.textContent = `💾 Saving ${message.total} items...`;
+          progressBar.style.width = '90%';
+        }
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(progressListener);
+
+    try {
+      // Call background script to do the work
+      const result = await chrome.runtime.sendMessage({ action: 'checkAconSales' });
+
+      chrome.runtime.onMessage.removeListener(progressListener);
+
+      if (result.success) {
+        progressBar.style.width = '100%';
+        progressText.innerHTML = `✅ Found <strong>${result.itemCount}</strong> sale items from ${result.pageCount} page(s)!`;
+
+        // Show success state briefly, then offer to view sales
+        setTimeout(() => {
+          progress.innerHTML = `
+            <div style="font-size: 12px; margin-bottom: 8px;">✅ Synced ${result.itemCount} items!</div>
+            <button id="viewSalesPageBtn" style="
+              background: linear-gradient(135deg, #10b981, #059669);
+              color: white;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 6px;
+              cursor: pointer;
+              font-size: 12px;
+              width: 100%;
+            ">View Sales Page →</button>
+          `;
+          document.getElementById('viewSalesPageBtn').addEventListener('click', () => {
+            chrome.tabs.create({ url: YUYU_ASSET_URL + '/sales' });
+          });
+        }, 1500);
+
+      } else {
+        progressText.textContent = `❌ ${result.error || 'Sync failed'}`;
+        progressBar.style.background = '#ef4444';
+        progressBar.style.width = '100%';
+      }
+    } catch (error) {
+      chrome.runtime.onMessage.removeListener(progressListener);
+      progressText.textContent = `❌ ${error.message || 'Sync failed'}`;
+      progressBar.style.background = '#ef4444';
+    }
+
+    // Reset button
+    setTimeout(() => {
+      btn.textContent = '🔥 Check ACON Sales';
+      btn.disabled = false;
+    }, 2000);
   });
 
   // Settings button
@@ -413,8 +518,23 @@ async function saveAsset(assetData) {
     console.log('📁 Status:', status);
     console.log('📂 Project:', selectedProject);
 
+    // Normalize URL for duplicate checking (remove tracking params)
+    const normalizeUrl = (url) => {
+      try {
+        const urlObj = new URL(url);
+        // Remove common tracking parameters
+        const paramsToRemove = ['ref', 'ref_', 'tag', 'linkCode', 'camp', 'creative', 'creativeASIN', 'linkId', 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'fbclid', 'gclid'];
+        paramsToRemove.forEach(param => urlObj.searchParams.delete(param));
+        return urlObj.toString();
+      } catch {
+        return url;
+      }
+    };
+
+    const normalizedUrl = normalizeUrl(assetData.url);
+    console.log('🔍 Checking for duplicates... URL:', normalizedUrl);
+
     // Check for duplicates first
-    console.log('🔍 Checking for duplicates...');
     const duplicateCheck = await fetch(`${YUYU_ASSET_URL}/api/check-duplicate`, {
       method: 'POST',
       headers: {
@@ -422,7 +542,7 @@ async function saveAsset(assetData) {
       },
       body: JSON.stringify({
         userId: apiKey,
-        url: assetData.url
+        url: normalizedUrl
       })
     });
 
@@ -431,36 +551,36 @@ async function saveAsset(assetData) {
 
     if (duplicateResult.success && duplicateResult.isDuplicate) {
       const { existingAsset } = duplicateResult;
-      const statusEmoji = existingAsset.status === 'wishlist' ? '📌' : existingAsset.status === 'bought' ? '✅' : '🎨';
+      const statusEmoji = existingAsset.status === 'wishlist' ? '📌 Wishlist' : existingAsset.status === 'bought' ? '✅ Bought' : '🎨 In Use';
 
-      // Add notification to localStorage
-      try {
-        const notificationsKey = `notifications_${apiKey}`;
-        const existingNotifs = localStorage.getItem(notificationsKey);
-        const notifications = existingNotifs ? JSON.parse(existingNotifs) : [];
+      // Show duplicate warning in UI
+      const warningHtml = `
+        <div class="duplicate-warning">
+          <div class="warning-icon">⚠️</div>
+          <div class="warning-title">Whoops! Already bookmarked!</div>
+          <div class="warning-text">You already have this asset saved</div>
+          <div class="warning-asset">"${existingAsset.title}"</div>
+          <div class="warning-text" style="margin-top: 6px;">${statusEmoji}</div>
+        </div>
+      `;
 
-        notifications.push({
-          id: `notif_${Date.now()}`,
-          type: 'duplicate',
-          assetId: existingAsset.id,
-          assetTitle: existingAsset.title,
-          url: assetData.url,
-          timestamp: new Date().toISOString()
-        });
+      // Insert warning before the quick add button
+      const quickAddBtn = document.getElementById('quickAdd');
+      if (quickAddBtn) {
+        // Remove any existing warning first
+        const existingWarning = document.querySelector('.duplicate-warning');
+        if (existingWarning) existingWarning.remove();
 
-        localStorage.setItem(notificationsKey, JSON.stringify(notifications));
-        console.log('📬 Notification added to localStorage');
-      } catch (e) {
-        console.error('Failed to add notification:', e);
+        quickAddBtn.insertAdjacentHTML('beforebegin', warningHtml);
+        quickAddBtn.textContent = '📂 Open MyPebbles';
+        quickAddBtn.onclick = () => window.open('https://pebblz.xyz', '_blank');
       }
 
-      if (!confirm(`⚠️ You already have this asset!\n\n"${existingAsset.title}"\n${statusEmoji} Status: ${existingAsset.status}\n🏪 Platform: ${existingAsset.platform}\n\nDo you want to add it again anyway?`)) {
-        console.log('❌ User cancelled - duplicate detected');
-        return false;
-      }
+      console.log('❌ Duplicate blocked:', existingAsset.title);
+      return false;
     }
 
-    // Proceed with saving
+    // Proceed with saving (use normalized URL)
     const response = await fetch(`${YUYU_ASSET_URL}/api/add-asset`, {
       method: 'POST',
       headers: {
@@ -470,7 +590,8 @@ async function saveAsset(assetData) {
         userId: apiKey,
         status: status,
         projectId: selectedProject || null,
-        ...assetData
+        ...assetData,
+        url: normalizedUrl  // Use normalized URL for storage
       })
     });
 

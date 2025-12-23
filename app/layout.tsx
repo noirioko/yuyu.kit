@@ -25,6 +25,9 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <link rel="icon" href="/images/favicon-pebbles.png" type="image/png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Boldonse&family=Corinthia:wght@400;700&family=M+PLUS+Rounded+1c&display=swap" rel="stylesheet" />
       </head>
       <body className={inter.className}>
         <ThemeProvider>

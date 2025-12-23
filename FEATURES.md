@@ -48,7 +48,7 @@
 
 ### Extension Features
 - **Auto-detection** - Automatically extracts asset info from page
-- **Manual override** - Edit any field before saving
+- **Quick save** - Save instantly, edit details in the app later
 - **Project selection** - Choose which project to save to
 - **Status selection** - Set initial status (Wishlist/Bought/In Use)
 - **Tag input** - Add tags while saving
@@ -73,19 +73,23 @@
 
 ## Subscription & Pricing
 
-### Free Tier
+### Free Sprout
 - Up to 50 assets
 - Up to 3 projects
-- Unlimited collections
+- Up to 5 collections
 - Full browser extension access
 - All core features
 
-### Premium (Lifetime $9.99)
+### Zen Gardener (IDR 199,000/year)
 - **Unlimited** assets
 - **Unlimited** projects
-- Unlimited collections
-- Lifetime access
-- Support development
+- **Unlimited** collections
+- Priority support
+
+### Zen Castle (IDR 399,000 lifetime)
+- Everything in Zen Gardener
+- **Lifetime access** - pay once, use forever
+- Lifetime updates
 
 ## Technical Features
 
@@ -105,9 +109,12 @@
 
 - `/` - Dashboard (main app)
 - `/tags` - Tag browser
+- `/sales` - ACON3D sale matches
 - `/overview` - Statistics and insights
 - `/profile` - User profile and settings
+- `/pricing` - Subscription plans
 - `/upgrade` - Premium upgrade page
+- `/support` - FAQ and help
 - `/about` - About MyPebbles
 - `/privacy` - Privacy policy
 
