@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getAdminDb } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 interface SaleItem {
   title: string;
@@ -17,16 +18,16 @@ interface SaveSalesRequest {
   lastUpdated: string;
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
+
 export async function POST(request: Request) {
   try {
     const body: SaveSalesRequest = await request.json();
     const { userId, items, lastUpdated } = body;
-
-    const corsHeaders = {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    };
 
     // Validate required fields
     if (!userId || !items || !Array.isArray(items)) {
@@ -44,10 +45,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const db = getAdminDb();
+    if (!db) {
+      return NextResponse.json(
+        { success: false, error: 'Database not initialized' },
+        { status: 500, headers: corsHeaders }
+      );
+    }
 
-    // Save sales data to Firestore
-    await db.collection('sales').doc(userId).set({
+    // Save sales data to Firestore using client SDK
+    await setDoc(doc(db, 'sales', userId), {
       items: items.map(item => ({
         title: item.title || '',
         url: item.url || '',
@@ -72,11 +78,7 @@ export async function POST(request: Request) {
     console.error('Error saving sales data:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to save sales data' },
-      { status: 500, headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type',
-      }}
+      { status: 500, headers: corsHeaders }
     );
   }
 }

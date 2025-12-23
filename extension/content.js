@@ -157,7 +157,8 @@ async function clickNextPage() {
   return false;
 }
 
-// Check if we're on ACON3D sale page and should scrape (original auto-scrape behavior)
+// Check if we're on ACON3D sale page and should scrape
+// NOTE: This is now only triggered by message from popup/background, not automatically
 async function checkAndScrapeSalePage() {
   const url = window.location.href;
 
@@ -166,7 +167,9 @@ async function checkAndScrapeSalePage() {
     return;
   }
 
-  console.log('🔥 ACON3D Sale page detected! Starting scrape...');
+  console.log('🔥 ACON3D Sale page - ready for scraping (waiting for trigger)...');
+  // Don't auto-scrape - wait for message from popup/background
+  return;
 
   // Wait for page to fully load
   await new Promise(resolve => setTimeout(resolve, 3000));
