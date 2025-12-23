@@ -226,7 +226,7 @@ async function handleBulkAddAssets(assetsArray) {
   return { success: true, count: successCount, failed: failCount };
 }
 
-// Handle ACON sale checking with multi-page support
+// Handle ACON sale checking - scrapes the CURRENT tab user is viewing
 async function handleCheckAconSales(sendProgressUpdate) {
   console.log('🔥 Starting ACON sale check...');
 
@@ -237,37 +237,29 @@ async function handleCheckAconSales(sendProgressUpdate) {
     throw new Error('Please connect your account first');
   }
 
+  // Get the current active tab
+  const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+  if (!activeTab) {
+    throw new Error('No active tab found');
+  }
+
+  // Check if user is on ACON sale page
+  if (!activeTab.url || !activeTab.url.includes('acon3d.com')) {
+    throw new Error('Please go to the ACON3D sale page first! Click the 🌐 button to visit.');
+  }
+
   let allSaleItems = [];
   let currentPage = 1;
   const maxPages = 20; // Safety limit
 
-  // Open ACON sale page in background
-  const tab = await chrome.tabs.create({
-    url: 'https://acon3d.com/en/event/sale',
-    active: false // Open in background!
-  });
-
   try {
-    // Wait for tab to load
-    await new Promise(resolve => {
-      const listener = (tabId, info) => {
-        if (tabId === tab.id && info.status === 'complete') {
-          chrome.tabs.onUpdated.removeListener(listener);
-          resolve();
-        }
-      };
-      chrome.tabs.onUpdated.addListener(listener);
-    });
-
-    // Give page time to render
-    await new Promise(resolve => setTimeout(resolve, 3000));
-
     while (currentPage <= maxPages) {
       sendProgressUpdate({ page: currentPage, status: 'scraping' });
       console.log(`📄 Scraping page ${currentPage}...`);
 
       // Tell content script to scrape current page
-      const result = await chrome.tabs.sendMessage(tab.id, { action: 'scrapeSalePage' });
+      const result = await chrome.tabs.sendMessage(activeTab.id, { action: 'scrapeSalePage' });
 
       if (result && result.items && result.items.length > 0) {
         allSaleItems = [...allSaleItems, ...result.items];
@@ -280,18 +272,15 @@ async function handleCheckAconSales(sendProgressUpdate) {
         break;
       }
 
-      // Navigate to next page
+      // Navigate to next page (user will see this!)
       currentPage++;
       sendProgressUpdate({ page: currentPage, status: 'loading' });
 
-      await chrome.tabs.sendMessage(tab.id, { action: 'goToNextPage' });
+      await chrome.tabs.sendMessage(activeTab.id, { action: 'goToNextPage' });
 
       // Wait for navigation
       await new Promise(resolve => setTimeout(resolve, 3000));
     }
-
-    // Close the background tab
-    await chrome.tabs.remove(tab.id);
 
     // Save to Firebase
     if (allSaleItems.length > 0) {
@@ -319,8 +308,6 @@ async function handleCheckAconSales(sendProgressUpdate) {
     };
 
   } catch (error) {
-    // Make sure to close tab on error
-    try { await chrome.tabs.remove(tab.id); } catch (e) {}
     throw error;
   }
 }
