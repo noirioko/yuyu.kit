@@ -140,7 +140,7 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 rounded-full p-2 bg-gray-100 hover:bg-gray-200 transition-all hover:scale-110"
+          className="absolute top-4 right-4 z-20 rounded-full p-2 bg-gray-100 hover:bg-gray-200 transition-all hover:scale-110 cursor-pointer"
           aria-label="Close"
         >
           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
                 type="button"
                 onClick={handleFetchInfo}
                 disabled={fetching || !url}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap cursor-pointer"
               >
                 {fetching ? 'Fetching...' : '✨ Auto-Fill'}
               </button>
@@ -352,7 +352,7 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
               <button
                 type="button"
                 onClick={() => setStatus('wishlist')}
-                className={`flex-1 py-2 rounded-lg border-2 transition ${
+                className={`flex-1 py-2 rounded-lg border-2 transition cursor-pointer ${
                   status === 'wishlist'
                     ? 'border-[#2868c6] bg-[#91d2f4]/20 text-[#2868c6] font-medium'
                     : 'border-gray-300 text-gray-600 hover:border-gray-400'
@@ -363,18 +363,18 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
               <button
                 type="button"
                 onClick={() => setStatus('bought')}
-                className={`flex-1 py-2 rounded-lg border-2 transition ${
+                className={`flex-1 py-2 rounded-lg border-2 transition cursor-pointer ${
                   status === 'bought'
                     ? 'border-[#2868c6] bg-[#91d2f4]/20 text-[#2868c6] font-medium'
                     : 'border-gray-300 text-gray-600 hover:border-gray-400'
                 }`}
               >
-                Purchased
+                Bought
               </button>
               <button
                 type="button"
                 onClick={() => setStatus('in-use')}
-                className={`flex-1 py-2 rounded-lg border-2 transition ${
+                className={`flex-1 py-2 rounded-lg border-2 transition cursor-pointer ${
                   status === 'in-use'
                     ? 'border-[#2868c6] bg-[#91d2f4]/20 text-[#2868c6] font-medium'
                     : 'border-gray-300 text-gray-600 hover:border-gray-400'
@@ -389,14 +389,14 @@ export default function AddAssetModal({ userId, projects, collections, onClose }
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+              className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition cursor-pointer"
               disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
+              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 cursor-pointer"
               disabled={loading}
             >
               {loading ? 'Adding...' : 'Add Asset'}

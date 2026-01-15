@@ -28,7 +28,7 @@ export default function ViewAssetModal({ asset, onClose, onEdit, onDelete }: Vie
         {/* X Close Button */}
         <button
           onClick={onClose}
-          className={`absolute top-4 right-4 z-20 rounded-full p-2 shadow-lg transition-all hover:scale-110 ${
+          className={`absolute top-4 right-4 z-20 rounded-full p-2 shadow-lg transition-all hover:scale-110 cursor-pointer ${
             theme === 'night'
               ? 'bg-white/10 hover:bg-white/20 backdrop-blur-lg'
               : 'bg-white/90 hover:bg-white'
@@ -221,7 +221,7 @@ export default function ViewAssetModal({ asset, onClose, onEdit, onDelete }: Vie
           <div className="flex gap-3">
             <button
               onClick={onDelete}
-              className={`flex-1 py-3 border rounded-lg transition font-medium ${
+              className={`flex-1 py-3 border rounded-lg transition font-medium cursor-pointer ${
                 theme === 'night'
                   ? 'border-red-400/50 text-red-400 hover:bg-red-400/10'
                   : 'border-red-300 text-red-600 hover:bg-red-50'
@@ -231,7 +231,7 @@ export default function ViewAssetModal({ asset, onClose, onEdit, onDelete }: Vie
             </button>
             <button
               onClick={onEdit}
-              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition"
+              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition cursor-pointer"
             >
               ✏️ Edit Asset
             </button>

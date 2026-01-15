@@ -159,7 +159,7 @@ export default function CollectionModal({ userId, onClose }: CollectionModalProp
             <button
               type="button"
               onClick={onClose}
-              className={`flex-1 py-3 border rounded-lg transition font-medium ${
+              className={`flex-1 py-3 border rounded-lg transition font-medium cursor-pointer ${
                 theme === 'night'
                   ? 'border-white/20 text-white/70 hover:bg-white/5'
                   : 'border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -170,7 +170,7 @@ export default function CollectionModal({ userId, onClose }: CollectionModalProp
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
+              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 cursor-pointer"
               disabled={loading}
             >
               {loading ? 'Creating...' : 'Create Collection'}

@@ -243,7 +243,7 @@ https://acon3d.com/en/3dmodels/...`}
                 <button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition cursor-pointer"
                   disabled={parsing}
                 >
                   Cancel
@@ -251,7 +251,7 @@ https://acon3d.com/en/3dmodels/...`}
                 <button
                   type="button"
                   onClick={handleParse}
-                  className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
+                  className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 cursor-pointer"
                   disabled={parsing || !htmlContent.trim()}
                 >
                   {parsing ? '🔄 Scraping...' : '✨ Auto-Import'}
@@ -293,7 +293,7 @@ https://acon3d.com/en/3dmodels/...`}
                     setParsedAssets([]);
                     setHtmlContent('');
                   }}
-                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  className="flex-1 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition cursor-pointer"
                   disabled={importing}
                 >
                   ← Back
@@ -301,7 +301,7 @@ https://acon3d.com/en/3dmodels/...`}
                 <button
                   type="button"
                   onClick={handleImport}
-                  className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
+                  className="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 cursor-pointer"
                   disabled={importing}
                 >
                   {importing ? `Importing ${parsedAssets.length} assets...` : `Import ${parsedAssets.length} Assets`}

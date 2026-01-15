@@ -581,6 +581,25 @@ export default function Dashboard() {
             ))}
           </div>
         )}
+        {/* Sparkles for day mode */}
+        {theme === 'day' && (
+          <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+            {stars.slice(0, 8).map((star, i) => (
+              <div
+                key={`sparkle-${star.id}`}
+                className="absolute text-white/70 animate-sparkle"
+                style={{
+                  top: `${star.top}%`,
+                  left: `${star.left}%`,
+                  animationDelay: `${i * 0.2}s`,
+                  fontSize: `${8 + (i % 3) * 4}px`,
+                }}
+              >
+                ✦
+              </div>
+            ))}
+          </div>
+        )}
         <div className="container mx-auto px-4 md:px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -595,14 +614,19 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <img
-                src="/yuyu_mojis/yuwon_veryhappy.png"
-                alt="MyPebbles"
-                className="h-8 md:h-10 w-auto rounded-lg object-contain"
-              />
-              <span className={`text-xl md:text-2xl font-semibold transition-colors ${
-                theme === 'night' ? 'text-white' : 'text-gray-800'
-              }`}>MyPebbles</span>
+              <a
+                href="/"
+                className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition"
+              >
+                <img
+                  src="/yuyu_mojis/yuwon_veryhappy.png"
+                  alt="MyPebbles"
+                  className="h-8 md:h-10 w-auto rounded-lg object-contain"
+                />
+                <span className={`text-xl md:text-2xl font-semibold transition-colors ${
+                  theme === 'night' ? 'text-white' : 'text-gray-800'
+                }`}>MyPebbles</span>
+              </a>
             </div>
 
             <div className="flex items-center gap-2 md:gap-4">
@@ -1078,7 +1102,7 @@ export default function Dashboard() {
                       <circle cx="17" cy="15" r="3"/>
                       <circle cx="7" cy="18" r="2.5"/>
                     </svg>
-                    Purchased ({assets.filter(a => a.status === 'bought').length})
+                    Bought ({assets.filter(a => a.status === 'bought').length})
                   </button>
                 </div>}
               </div>
@@ -1489,7 +1513,7 @@ export default function Dashboard() {
                   </>
                 ) : (
                   view === 'all' ? 'All Pebbles' :
-                  view === 'wishlist' ? 'Wishlist' : 'Purchased'
+                  view === 'wishlist' ? 'Wishlist' : 'Bought'
                 )}
               </h1>
               <div className="flex gap-2">
@@ -1520,7 +1544,7 @@ export default function Dashboard() {
                   </div>
                   <button
                     onClick={() => router.push('/overview')}
-                    className={`text-sm font-medium transition ${
+                    className={`text-sm font-medium transition cursor-pointer ${
                       theme === 'night'
                         ? 'text-[#cba2ea] hover:text-[#91d2f4]'
                         : 'text-[#2868c6] hover:text-[#3f3381]'
@@ -1533,16 +1557,24 @@ export default function Dashboard() {
                   {(() => {
                     const wishlistCount = assets.filter(a => a.status === 'wishlist').length;
                     const boughtCount = assets.filter(a => a.status === 'bought').length;
-                    const totalSpent = assets
-                      .filter(a => a.status === 'bought')
-                      .reduce((sum, a) => sum + (a.currentPrice || 0), 0);
+
+                    // Group total spent by currency
+                    const spentByCurrency: Record<string, number> = {};
+                    assets
+                      .filter(a => a.status === 'bought' && a.currentPrice)
+                      .forEach(a => {
+                        const currency = a.currency || '$';
+                        spentByCurrency[currency] = (spentByCurrency[currency] || 0) + (a.currentPrice || 0);
+                      });
 
                     return (
                       <>
-                        <div className={`p-3 rounded-lg border ${
+                        <button
+                          onClick={() => { setView('wishlist'); setSelectedProject(null); setSelectedCollection(null); }}
+                          className={`p-3 rounded-lg border cursor-pointer hover:scale-105 transition-transform ${
                           theme === 'night'
-                            ? 'border-white/10 bg-white/5'
-                            : 'border-gray-200 bg-gray-50'
+                            ? 'border-white/10 bg-white/5 hover:bg-white/10'
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                         }`}>
                           <p className={`text-xs mb-1 ${
                             theme === 'night' ? 'text-white/60' : 'text-gray-500'
@@ -1550,11 +1582,13 @@ export default function Dashboard() {
                           <p className={`text-2xl font-bold ${
                             theme === 'night' ? 'text-white' : 'text-gray-800'
                           }`}>{wishlistCount}</p>
-                        </div>
-                        <div className={`p-3 rounded-lg border ${
+                        </button>
+                        <button
+                          onClick={() => { setView('bought'); setSelectedProject(null); setSelectedCollection(null); }}
+                          className={`p-3 rounded-lg border cursor-pointer hover:scale-105 transition-transform ${
                           theme === 'night'
-                            ? 'border-white/10 bg-white/5'
-                            : 'border-gray-200 bg-gray-50'
+                            ? 'border-white/10 bg-white/5 hover:bg-white/10'
+                            : 'border-gray-200 bg-gray-50 hover:bg-gray-100'
                         }`}>
                           <p className={`text-xs mb-1 ${
                             theme === 'night' ? 'text-white/60' : 'text-gray-500'
@@ -1562,7 +1596,7 @@ export default function Dashboard() {
                           <p className={`text-2xl font-bold ${
                             theme === 'night' ? 'text-white' : 'text-gray-800'
                           }`}>{boughtCount}</p>
-                        </div>
+                        </button>
                         <div className={`p-3 rounded-lg border ${
                           theme === 'night'
                             ? 'border-white/10 bg-white/5'
@@ -1571,9 +1605,17 @@ export default function Dashboard() {
                           <p className={`text-xs mb-1 ${
                             theme === 'night' ? 'text-white/60' : 'text-gray-500'
                           }`}>Total Spent</p>
-                          <p className={`text-xl font-bold text-[#cba2ea]`}>
-                            ${totalSpent.toFixed(2)}
-                          </p>
+                          <div className="space-y-0.5">
+                            {Object.keys(spentByCurrency).length === 0 ? (
+                              <p className={`text-xl font-bold text-[#cba2ea]`}>$0.00</p>
+                            ) : (
+                              Object.entries(spentByCurrency).map(([currency, amount]) => (
+                                <p key={currency} className={`text-lg font-bold text-[#cba2ea]`}>
+                                  {currency}{amount.toFixed(2)}
+                                </p>
+                              ))
+                            )}
+                          </div>
                         </div>
                       </>
                     );

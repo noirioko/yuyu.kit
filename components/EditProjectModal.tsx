@@ -185,7 +185,7 @@ export default function EditProjectModal({ project, onClose }: EditProjectModalP
             <button
               type="button"
               onClick={handleDelete}
-              className={`flex-1 py-3 border rounded-lg transition font-medium ${
+              className={`flex-1 py-3 border rounded-lg transition font-medium cursor-pointer ${
                 theme === 'night'
                   ? 'border-red-400/50 text-red-400 hover:bg-red-400/10'
                   : 'border-red-300 text-red-600 hover:bg-red-50'
@@ -196,7 +196,7 @@ export default function EditProjectModal({ project, onClose }: EditProjectModalP
             </button>
             <button
               type="submit"
-              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50"
+              className="flex-1 py-3 bg-gradient-to-r from-[#2868c6] to-[#cba2ea] text-white rounded-lg font-medium hover:shadow-lg transition disabled:opacity-50 cursor-pointer"
               disabled={loading}
             >
               {loading ? 'Saving...' : 'Save Changes'}
