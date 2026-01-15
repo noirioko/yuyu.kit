@@ -1351,6 +1351,39 @@ export default function Dashboard() {
                     </svg>
                     🔥 View Sales Page
                   </button>
+                  <button
+                    onClick={async () => {
+                      if (!db || !user) return;
+                      const confirmed = confirm('Recalculate folder counts?\n\nThis will fix any out-of-sync project/collection counts.');
+                      if (!confirmed) return;
+
+                      showToast('Recalculating counts...');
+
+                      // Recalculate project counts
+                      for (const project of projects) {
+                        const count = assets.filter(a => a.projectId === project.id).length;
+                        await updateDoc(doc(db, 'projects', project.id), { assetCount: count });
+                      }
+
+                      // Recalculate collection counts
+                      for (const collection of collections) {
+                        const count = assets.filter(a => a.collectionId === collection.id).length;
+                        await updateDoc(doc(db, 'collections', collection.id), { assetCount: count });
+                      }
+
+                      showToast('Counts recalculated!');
+                    }}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 cursor-pointer ${
+                      theme === 'night'
+                        ? 'text-white/70 hover:bg-white/5'
+                        : 'text-gray-600 hover:bg-gray-50'
+                    }`}
+                  >
+                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Recalculate Counts
+                  </button>
                 </div>}
               </div>
               </div>
@@ -1620,6 +1653,44 @@ export default function Dashboard() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
+                        {/* Remove from folder button - only when viewing a project/collection */}
+                        {(selectedProject || selectedCollection) && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!db) return;
+                              const folderName = selectedProject
+                                ? projects.find(p => p.id === selectedProject)?.name
+                                : collections.find(c => c.id === selectedCollection)?.name;
+
+                              // Update asset to remove from folder
+                              await updateDoc(doc(db, 'assets', asset.id), {
+                                projectId: selectedProject ? null : asset.projectId,
+                                collectionId: selectedCollection ? null : asset.collectionId,
+                              });
+
+                              // Decrement folder count
+                              if (selectedProject) {
+                                await updateDoc(doc(db, 'projects', selectedProject), {
+                                  assetCount: increment(-1)
+                                });
+                              }
+                              if (selectedCollection) {
+                                await updateDoc(doc(db, 'collections', selectedCollection), {
+                                  assetCount: increment(-1)
+                                });
+                              }
+
+                              showToast(`Removed from "${folderName}"`);
+                            }}
+                            className="p-2 bg-white rounded-lg shadow-md hover:bg-orange-50 transition"
+                            title={`Remove from ${selectedProject ? 'project' : 'collection'}`}
+                          >
+                            <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                          </button>
+                        )}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
