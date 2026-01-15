@@ -69,6 +69,9 @@ export default function Dashboard() {
   const [salesOnWishlist, setSalesOnWishlist] = useState<Asset[]>([]);
   const [checkingSales, setCheckingSales] = useState(false);
 
+  // Toast notification state
+  const [toast, setToast] = useState<{message: string, visible: boolean}>({message: '', visible: false});
+
   // Subscription state
   const [isPremium, setIsPremium] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(true);
@@ -353,6 +356,65 @@ export default function Dashboard() {
     } catch (error) {
       console.error('❌ Error deleting data:', error);
       alert('Failed to delete all data. Some items may remain. Check console for details.');
+    }
+  };
+
+  // Show toast notification
+  const showToast = (message: string) => {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast({ message: '', visible: false }), 3000);
+  };
+
+  // Handle dropping asset onto project/collection
+  const handleAssetDrop = async (
+    asset: Asset,
+    targetType: 'project' | 'collection',
+    targetId: string,
+    targetName: string
+  ) => {
+    if (!db) return;
+
+    try {
+      // Get old project/collection IDs
+      const oldProjectId = asset.projectId;
+      const oldCollectionId = asset.collectionId;
+
+      // Update the asset
+      await updateDoc(doc(db, 'assets', asset.id), {
+        projectId: targetType === 'project' ? targetId : null,
+        collectionId: targetType === 'collection' ? targetId : null,
+      });
+
+      // Decrement old project count if it had one
+      if (oldProjectId) {
+        await updateDoc(doc(db, 'projects', oldProjectId), {
+          assetCount: increment(-1)
+        });
+      }
+
+      // Decrement old collection count if it had one
+      if (oldCollectionId) {
+        await updateDoc(doc(db, 'collections', oldCollectionId), {
+          assetCount: increment(-1)
+        });
+      }
+
+      // Increment new target count
+      if (targetType === 'project') {
+        await updateDoc(doc(db, 'projects', targetId), {
+          assetCount: increment(1)
+        });
+      } else {
+        await updateDoc(doc(db, 'collections', targetId), {
+          assetCount: increment(1)
+        });
+      }
+
+      // Show toast
+      showToast(`Moved "${asset.title}" to ${targetName}`);
+    } catch (error) {
+      console.error('Error moving asset:', error);
+      showToast('Failed to move asset');
     }
   };
 
@@ -1091,10 +1153,7 @@ export default function Dashboard() {
                         onDrop={(e) => {
                           e.preventDefault();
                           if (draggedAsset && db) {
-                            updateDoc(doc(db, 'assets', draggedAsset.id), {
-                              projectId: project.id,
-                              collectionId: null,
-                            });
+                            handleAssetDrop(draggedAsset, 'project', project.id, project.name);
                           }
                           setDragOverTarget(null);
                         }}
@@ -1203,10 +1262,7 @@ export default function Dashboard() {
                         onDrop={(e) => {
                           e.preventDefault();
                           if (draggedAsset && db) {
-                            updateDoc(doc(db, 'assets', draggedAsset.id), {
-                              collectionId: collection.id,
-                              projectId: null,
-                            });
+                            handleAssetDrop(draggedAsset, 'collection', collection.id, collection.name);
                           }
                           setDragOverTarget(null);
                         }}
@@ -2245,6 +2301,30 @@ export default function Dashboard() {
                 Delete
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.visible && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[99999] animate-fadeIn">
+          <div className={`px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 ${
+            theme === 'night'
+              ? 'bg-[#1a2332] border border-white/20 text-white'
+              : 'bg-white border border-gray-200 text-gray-800'
+          }`}>
+            <span className="text-lg">📦</span>
+            <span className="text-sm font-medium">{toast.message}</span>
+            <button
+              onClick={() => setToast({ message: '', visible: false })}
+              className={`ml-2 p-1 rounded-full transition ${
+                theme === 'night' ? 'hover:bg-white/10' : 'hover:bg-gray-100'
+              }`}
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
       )}
