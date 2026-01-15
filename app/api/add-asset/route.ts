@@ -11,9 +11,9 @@ const FREE_LIMITS = {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, url, title, thumbnailUrl, price, originalPrice, isOnSale, currency, platform, creator, description, status, projectId } = body;
+    const { userId, url, title, thumbnailUrl, price, originalPrice, isOnSale, currency, platform, creator, description, status, projectId, collectionId } = body;
 
-    console.log('📥 Received asset from extension:', { userId, title, platform, creator, status, projectId, isOnSale });
+    console.log('📥 Received asset from extension:', { userId, title, platform, creator, status, projectId, collectionId, isOnSale });
 
     // Validate required fields
     if (!userId || !url || !title) {
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
       creator: creator || '',
       fileLocation: null,
       projectId: projectId || null,
-      collectionId: null,
+      collectionId: collectionId || null,
       status: (status || 'wishlist') as 'wishlist' | 'bought' | 'in-use',
       tags: autoTags,
       priceHistory: priceValue ? [{
@@ -120,6 +120,14 @@ export async function POST(request: NextRequest) {
         assetCount: increment(1)
       });
       console.log('✅ Incremented count for project:', projectId);
+    }
+
+    // Increment collection count if asset is assigned to a collection
+    if (collectionId) {
+      await updateDoc(doc(db, 'collections', collectionId), {
+        assetCount: increment(1)
+      });
+      console.log('✅ Incremented count for collection:', collectionId);
     }
 
     return NextResponse.json({

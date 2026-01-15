@@ -46,8 +46,8 @@ async function init() {
   if (!apiKey) {
     renderSetup();
   } else {
-    // Fetch projects from Firebase when connected
-    await fetchProjects();
+    // Fetch projects and collections from Firebase when connected
+    await Promise.all([fetchProjects(), fetchCollections()]);
     renderMain();
   }
 }
@@ -92,9 +92,10 @@ function renderSetup() {
 }
 
 async function renderMain() {
-  const { defaultStatus, selectedProject, projects } = await chrome.storage.sync.get(['defaultStatus', 'selectedProject', 'projects']);
+  const { defaultStatus, selectedProject, selectedCollection, projects, collections } = await chrome.storage.sync.get(['defaultStatus', 'selectedProject', 'selectedCollection', 'projects', 'collections']);
   const status = defaultStatus || 'wishlist';
   const projectsList = projects || [];
+  const collectionsList = collections || [];
 
   document.getElementById('content').innerHTML = `
     <div class="status">
@@ -151,6 +152,21 @@ async function renderMain() {
         <select id="projectSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: none; font-size: 12px; color: #3b82f6;">
           <option value="">No Project</option>
           ${projectsList.map(p => `<option value="${p.id}" ${selectedProject === p.id ? 'selected' : ''}>${p.icon || '📁'} ${p.name}</option>`).join('')}
+        </select>
+      </div>
+
+      <div style="border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; margin-top: 10px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <label style="font-size: 12px; opacity: 0.9;">
+            Collection (optional):
+          </label>
+          <button id="refreshCollections" style="background: none; border: none; color: white; cursor: pointer; opacity: 0.7; font-size: 16px; padding: 0;" title="Refresh collections">
+            🔄
+          </button>
+        </div>
+        <select id="collectionSelect" style="width: 100%; padding: 8px; border-radius: 6px; border: none; font-size: 12px; color: #a855f7;">
+          <option value="">No Collection</option>
+          ${collectionsList.map(c => `<option value="${c.id}" ${selectedCollection === c.id ? 'selected' : ''}>${c.icon || '📚'} ${c.name}</option>`).join('')}
         </select>
       </div>
     </div>
@@ -407,6 +423,21 @@ async function renderMain() {
     await fetchProjects();
     btn.textContent = '🔄';
   });
+
+  // Collection selector
+  document.getElementById('collectionSelect').addEventListener('change', async (e) => {
+    const collectionId = e.target.value || null;
+    await chrome.storage.sync.set({ selectedCollection: collectionId });
+    console.log('✅ Selected collection:', collectionId);
+  });
+
+  // Refresh collections button
+  document.getElementById('refreshCollections').addEventListener('click', async () => {
+    const btn = document.getElementById('refreshCollections');
+    btn.textContent = '⏳';
+    await fetchCollections();
+    btn.textContent = '🔄';
+  });
 }
 
 // Fetch projects from Firebase
@@ -439,6 +470,39 @@ async function fetchProjects() {
     }
   } catch (error) {
     console.error('💥 Error fetching projects:', error);
+  }
+}
+
+// Fetch collections from Firebase
+async function fetchCollections() {
+  const { apiKey } = await chrome.storage.sync.get(['apiKey']);
+
+  if (!apiKey) {
+    console.log('No API key, skipping collection fetch');
+    return;
+  }
+
+  try {
+    console.log('🔄 Fetching collections from Firebase...');
+
+    const response = await fetch(`${YUYU_ASSET_URL}/api/get-collections?userId=${apiKey}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      await chrome.storage.sync.set({ collections: result.collections });
+      console.log('✅ Collections loaded:', result.collections.length);
+      renderMain(); // Re-render to show updated collections
+    } else {
+      console.error('❌ Failed to fetch collections:', result.error);
+    }
+  } catch (error) {
+    console.error('💥 Error fetching collections:', error);
   }
 }
 
@@ -504,7 +568,7 @@ async function renderSettings() {
 }
 
 async function saveAsset(assetData) {
-  const { apiKey, defaultStatus, selectedProject } = await chrome.storage.sync.get(['apiKey', 'defaultStatus', 'selectedProject']);
+  const { apiKey, defaultStatus, selectedProject, selectedCollection } = await chrome.storage.sync.get(['apiKey', 'defaultStatus', 'selectedProject', 'selectedCollection']);
   const status = defaultStatus || 'wishlist';
 
   if (!apiKey) {
@@ -517,6 +581,7 @@ async function saveAsset(assetData) {
     console.log('👤 User ID:', apiKey);
     console.log('📁 Status:', status);
     console.log('📂 Project:', selectedProject);
+    console.log('📚 Collection:', selectedCollection);
 
     // Normalize URL for duplicate checking (remove tracking params)
     const normalizeUrl = (url) => {
@@ -590,6 +655,7 @@ async function saveAsset(assetData) {
         userId: apiKey,
         status: status,
         projectId: selectedProject || null,
+        collectionId: selectedCollection || null,
         ...assetData,
         url: normalizedUrl  // Use normalized URL for storage
       })
@@ -614,7 +680,7 @@ async function saveAsset(assetData) {
 }
 
 async function bulkSaveAssets(assetsArray) {
-  const { apiKey, defaultStatus, selectedProject } = await chrome.storage.sync.get(['apiKey', 'defaultStatus', 'selectedProject']);
+  const { apiKey, defaultStatus, selectedProject, selectedCollection } = await chrome.storage.sync.get(['apiKey', 'defaultStatus', 'selectedProject', 'selectedCollection']);
   const status = defaultStatus || 'wishlist';
 
   if (!apiKey) {
@@ -625,7 +691,7 @@ async function bulkSaveAssets(assetsArray) {
   let successCount = 0;
   let failCount = 0;
 
-  console.log(`🚀 Starting bulk import with status: ${status}, project: ${selectedProject}`);
+  console.log(`🚀 Starting bulk import with status: ${status}, project: ${selectedProject}, collection: ${selectedCollection}`);
 
   for (const assetData of assetsArray) {
     try {
@@ -640,6 +706,7 @@ async function bulkSaveAssets(assetsArray) {
           userId: apiKey,
           status: status,
           projectId: selectedProject || null,
+          collectionId: selectedCollection || null,
           ...assetData
         })
       });
