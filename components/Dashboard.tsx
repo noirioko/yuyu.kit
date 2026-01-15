@@ -1020,7 +1020,7 @@ export default function Dashboard() {
                 {!collapsedSections.view && <div className="space-y-1 ml-5">
                   <button
                     onClick={() => { setView('all'); setSelectedProject(null); setSelectedCollection(null); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 cursor-pointer ${
                       view === 'all' && !selectedProject && !selectedCollection
                         ? theme === 'night'
                           ? 'bg-[#91d2f4]/30 text-white font-medium'
@@ -1041,7 +1041,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={() => { setView('wishlist'); setSelectedProject(null); setSelectedCollection(null); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 cursor-pointer ${
                       view === 'wishlist' && !selectedProject && !selectedCollection
                         ? theme === 'night'
                           ? 'bg-[#91d2f4]/30 text-white font-medium'
@@ -1061,7 +1061,7 @@ export default function Dashboard() {
                   </button>
                   <button
                     onClick={() => { setView('bought'); setSelectedProject(null); setSelectedCollection(null); setMobileMenuOpen(false); }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 ${
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition flex items-center gap-2 cursor-pointer ${
                       view === 'bought' && !selectedProject && !selectedCollection
                         ? theme === 'night'
                           ? 'bg-[#91d2f4]/30 text-white font-medium'

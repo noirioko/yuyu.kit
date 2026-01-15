@@ -38,17 +38,19 @@ async function detectServer() {
 
 // Load settings and render popup
 async function init() {
-  // Auto-detect which server to use
-  await detectServer();
+  // Auto-detect which server to use (don't await - do in background)
+  detectServer();
 
   const { apiKey } = await chrome.storage.sync.get(['apiKey']);
 
   if (!apiKey) {
     renderSetup();
   } else {
-    // Fetch projects and collections from Firebase when connected
-    await Promise.all([fetchProjects(), fetchCollections()]);
+    // Render immediately with cached data
     renderMain();
+
+    // Then refresh projects/collections in background (don't block UI)
+    Promise.all([fetchProjects(), fetchCollections()]).catch(console.error);
   }
 }
 
